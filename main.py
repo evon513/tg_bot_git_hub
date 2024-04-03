@@ -1,6 +1,6 @@
 import requests
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
-from telegram.ext import CommandHandler
+from telegram.ext import CommandHandler, MessageHandler, filters
 import logging
 from telegram.ext import Application
 from config import BOT_TOKEN
@@ -20,15 +20,34 @@ reply_keyboard = [['/help', '/search'],
                   ['/start', '/close']]
 
 reply_keyboard_search = [
-                         ['/author', '/country'],
-                         ['/rate', '/year'],
-                         ['/name', '/type'],
-                         ['/genre', '/found']
-                        ]
+    ['/author', '/country'],
+    ['/rate', '/year'],
+    ['/name', '/type'],
+    ['/genre', '/found']
+]
 markup_search = ReplyKeyboardMarkup(reply_keyboard_search, one_time_keyboard=False)
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
 
 last_markup = markup
+
+chose_genre = False
+chose_author = False
+chose_name = False
+chose_type = False
+chose_year = False
+chose_rate = False
+chose_country = False
+
+is_choosed = False
+
+genre_1 = ''
+genre = ''
+author = ''
+name = ''
+type = ''
+year = ''
+rate = ''
+country = ''
 
 
 async def start(update, context):
@@ -61,6 +80,52 @@ async def search(update, context):
     await update.message.reply_text(f"Вот список доступных фильтров", reply_markup=markup_search)
     last_markup = markup_search
 
+
+async def genres(update, context):
+    global chose_genre
+    text = ''
+    for i in range(len(json_response['genres'])):
+        text += f'{i + 1}. {json_response['genres'][i]['genre']}\n'
+    await update.message.reply_text(text)
+    await update.message.reply_text(f"Вот список жанров фильмов, напиши одну любую цифру из доступных")
+    chose_genre = True
+
+
+async def answers(update, context):
+    global is_choosed, genre, chose_genre, genre_1
+    if chose_genre:
+        if update.message.text.isdigit() and (34 > int(update.message.text) > 0):
+            await update.message.reply_text(
+                f'Вы выбрали жанр номер {update.message.text}: {json_response['genres'][int(update.message.text) - 1]['genre']}, всё верно?')
+            genre_1 = update.message.text
+            is_choosed = True
+        else:
+            if is_choosed:
+                if update.message.text.lower() == 'да':
+                    await update.message.reply_text(f'Хорошо, теперь можете выбрать другой фильтр')
+                    genre = genre_1
+                    is_choosed = False
+                    chose_genre = False
+                else:
+                    await update.message.reply_text(f'Введите другой номер либо выберите другой фильтр')
+            else:
+                await update.message.reply_text(f'Введите цифру из списка!')
+    elif chose_author:
+        pass
+    elif chose_name:
+        pass
+    elif chose_rate:
+        pass
+    elif chose_country:
+        pass
+    elif chose_year:
+        pass
+    elif chose_type:
+        pass
+    else:
+        await update.message.reply_text(f'Выберите фильтр либо введите команду /found для поиска фильма {genre}')
+
+
 def main():
     application = Application.builder().token(BOT_TOKEN).build()
     application.add_handler(CommandHandler('start', start))
@@ -68,6 +133,8 @@ def main():
     application.add_handler(CommandHandler('open', open))
     application.add_handler(CommandHandler('close', close))
     application.add_handler(CommandHandler('search', search))
+    application.add_handler(CommandHandler('genre', genres))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, answers))
     application.run_polling()
 
 
