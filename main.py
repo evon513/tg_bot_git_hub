@@ -1,5 +1,5 @@
 import requests
-from telegram import ReplyKeyboardMarkup
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import CommandHandler
 import logging
 from telegram.ext import Application
@@ -34,10 +34,21 @@ async def help(update, context):
         "Я бот который поможет найти тебе нужный фильм!). Для открытия меню быстрых команд напишите /open")
 
 
+async def close(update, context):
+    await update.message.reply_text('Ок, для открытия клавиатуры введите /open', reply_markup=ReplyKeyboardRemove())
+
+
+async def open(update, context):
+    await update.message.reply_text('Ок, для закрытия клавиатуры введите /close', reply_markup=markup)
+
+
+
 def main():
     application = Application.builder().token(BOT_TOKEN).build()
     application.add_handler(CommandHandler('start', start))
     application.add_handler(CommandHandler("help", help))
+    application.add_handler(CommandHandler('open', open))
+    application.add_handler(CommandHandler('close', close))
     application.run_polling()
 
 
