@@ -1,3 +1,5 @@
+import json
+
 import requests
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import CommandHandler, MessageHandler, filters
@@ -6,6 +8,12 @@ from telegram.ext import Application
 from config import BOT_TOKEN
 
 headers = {"X-API-KEY": "098494fe-ff75-492d-ad4f-8833d7ff4b85"}
+request = 'https://kinopoiskapiunofficial.tech/api/v2.2/films?genre=24'
+response = requests.get(request, headers=headers)
+json_response = response.json()
+with open('kinopoisk.json', 'w') as kp:
+    json.dump(json_response, kp, ensure_ascii=False, indent=4)
+
 request = 'https://kinopoiskapiunofficial.tech/api/v2.2/films/filters'
 response = requests.get(request, headers=headers)
 json_response = response.json()
@@ -126,6 +134,15 @@ async def answers(update, context):
         await update.message.reply_text(f'Выберите фильтр либо введите команду /found для поиска фильма {genre}')
 
 
+async def found(update, context):
+    global genre
+    request = f'https://kinopoiskapiunofficial.tech/api/v2.2/films?genres={genre}'
+    response = requests.get(request, headers=headers)
+    json_response = response.json()
+    await update.message.reply_html(
+        f'{json_response['items'][0]['nameRu']}{json_response['items'][0]['posterUrlPreview']}')
+
+
 def main():
     application = Application.builder().token(BOT_TOKEN).build()
     application.add_handler(CommandHandler('start', start))
@@ -134,7 +151,9 @@ def main():
     application.add_handler(CommandHandler('close', close))
     application.add_handler(CommandHandler('search', search))
     application.add_handler(CommandHandler('genre', genres))
+    application.add_handler(CommandHandler('found', found))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, answers))
+    print(1)
     application.run_polling()
 
 
