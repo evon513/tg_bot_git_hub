@@ -17,9 +17,18 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 reply_keyboard = [['/help', '/search'],
-                  ['/start']]
+                  ['/start', '/close']]
 
+reply_keyboard_search = [
+                         ['/author', '/country'],
+                         ['/rate', '/year'],
+                         ['/name', '/type'],
+                         ['/genre', '/found']
+                        ]
+markup_search = ReplyKeyboardMarkup(reply_keyboard_search, one_time_keyboard=False)
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
+
+last_markup = markup
 
 
 async def start(update, context):
@@ -39,9 +48,18 @@ async def close(update, context):
 
 
 async def open(update, context):
-    await update.message.reply_text('Ок, для закрытия клавиатуры введите /close', reply_markup=markup)
+    await update.message.reply_text('Ок, для закрытия клавиатуры введите /close', reply_markup=last_markup)
 
 
+async def search(update, context):
+    global last_markup
+    text = ''
+    for j in range(len(reply_keyboard_search)):
+        for i in range(len(reply_keyboard_search[j])):
+            text += f'{reply_keyboard_search[j][i]}\n'
+    await update.message.reply_text(text)
+    await update.message.reply_text(f"Вот список доступных фильтров", reply_markup=markup_search)
+    last_markup = markup_search
 
 def main():
     application = Application.builder().token(BOT_TOKEN).build()
@@ -49,6 +67,7 @@ def main():
     application.add_handler(CommandHandler("help", help))
     application.add_handler(CommandHandler('open', open))
     application.add_handler(CommandHandler('close', close))
+    application.add_handler(CommandHandler('search', search))
     application.run_polling()
 
 
