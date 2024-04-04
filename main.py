@@ -1,4 +1,5 @@
 import json
+from random import randint
 
 import requests
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
@@ -18,11 +19,11 @@ request = 'https://kinopoiskapiunofficial.tech/api/v2.2/films/filters'
 response = requests.get(request, headers=headers)
 json_response = response.json()
 
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG
-)
-
-logger = logging.getLogger(__name__)
+# logging.basicConfig(
+#     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG
+# )
+#
+# logger = logging.getLogger(__name__)
 
 reply_keyboard = [['/help', '/search'],
                   ['/start', '/close']]
@@ -48,7 +49,6 @@ chose_country = False
 
 is_choosed = False
 
-genre_1 = ''
 genre = ''
 author = ''
 name = ''
@@ -100,24 +100,14 @@ async def genres(update, context):
 
 
 async def answers(update, context):
-    global is_choosed, genre, chose_genre, genre_1
+    global genre, chose_genre
     if chose_genre:
         if update.message.text.isdigit() and (34 > int(update.message.text) > 0):
             await update.message.reply_text(
-                f'Вы выбрали жанр номер {update.message.text}: {json_response['genres'][int(update.message.text) - 1]['genre']}, всё верно?')
-            genre_1 = update.message.text
-            is_choosed = True
+                f'Вы выбрали жанр номер {update.message.text}: {json_response['genres'][int(update.message.text) - 1]['genre']}, теперь можете выбрать другой фильтр.')
+            genre = update.message.text
         else:
-            if is_choosed:
-                if update.message.text.lower() == 'да':
-                    await update.message.reply_text(f'Хорошо, теперь можете выбрать другой фильтр')
-                    genre = genre_1
-                    is_choosed = False
-                    chose_genre = False
-                else:
-                    await update.message.reply_text(f'Введите другой номер либо выберите другой фильтр')
-            else:
-                await update.message.reply_text(f'Введите цифру из списка!')
+            await update.message.reply_text(f'Введите существующий номер либо выберите другой фильтр')
     elif chose_author:
         pass
     elif chose_name:
@@ -135,12 +125,19 @@ async def answers(update, context):
 
 
 async def found(update, context):
-    global genre
-    request = f'https://kinopoiskapiunofficial.tech/api/v2.2/films?genres={genre}'
-    response = requests.get(request, headers=headers)
+    request = f'https://kinopoiskapiunofficial.tech/api/v2.2/films'
+    params = {'genres': genre,
+              'type': type,
+              'year': year,
+              'countries': country,
+              'nameRu': name,
+              'ratingKinopoisk': rate}
+    response = requests.get(request, headers=headers, params=params)
     json_response = response.json()
-    await update.message.reply_html(
-        f'{json_response['items'][0]['nameRu']}{json_response['items'][0]['posterUrlPreview']}')
+    x = randint(0, len(json_response['items']))
+    print(x)
+    request_web = f'https://www.kinopoisk.ru/film/{json_response['items'][x]['kinopoiskId']}/'
+    await update.message.reply_html(f"<a href=\"{request_web}\">{json_response['items'][x]['nameRu']}</a>")
 
 
 def main():
