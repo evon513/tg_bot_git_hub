@@ -131,18 +131,20 @@ async def found(update, context):
               'ratingKinopoisk': rate}
     response = requests.get(request, headers=headers, params=params)
     json_response = response.json()
-    x = randint(0, len(json_response['items']))
+    x = randint(0, len(json_response['items']) - 1)
     request_web = f'https://www.kinopoisk.ru/film/{json_response['items'][x]['kinopoiskId']}/'
     await update.message.reply_html(f"<a href=\"{request_web}\">{json_response['items'][x]['nameRu']}</a>", reply_markup=markup_swipe)
     del json_response['items'][x]
 
 
 async def next(update, context):
+    global json_response
     try:
-        x = randint(0, len(json_response['items']))
+        x = randint(0, len(json_response['items']) - 1)
         request_web = f'https://www.kinopoisk.ru/film/{json_response['items'][x]['kinopoiskId']}/'
         await update.message.reply_html(f"<a href=\"{request_web}\">{json_response['items'][x]['nameRu']}</a>",
                                         reply_markup=markup_swipe)
+        del json_response['items'][x]
     except Exception:
         await update.message.reply_text(f'Упс, кажись фильмов с таким фильтром больше не осталось!')
 
