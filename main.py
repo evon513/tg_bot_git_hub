@@ -9,15 +9,15 @@ from telegram.ext import Application
 from config import BOT_TOKEN
 
 headers = {"X-API-KEY": "098494fe-ff75-492d-ad4f-8833d7ff4b85"}
-request = 'https://kinopoiskapiunofficial.tech/api/v2.2/films?genre=24'
+request = 'https://kinopoiskapiunofficial.tech/api/v2.2/films'
 response = requests.get(request, headers=headers)
 json_response = response.json()
-with open('kinopoisk.json', 'w') as kp:
-    json.dump(json_response, kp, ensure_ascii=False, indent=4)
+# with open('kinopoisk.json', 'w') as kp:
+#     json.dump(json_response, kp, ensure_ascii=False, indent=4)
 
-request = 'https://kinopoiskapiunofficial.tech/api/v2.2/films/filters'
-response = requests.get(request, headers=headers)
-json_response = response.json()
+request_filters = 'https://kinopoiskapiunofficial.tech/api/v2.2/films/filters'
+response_filters = requests.get(request_filters, headers=headers)
+json_response_filters = response_filters.json()
 
 # logging.basicConfig(
 #     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG
@@ -34,28 +34,19 @@ reply_keyboard_search = [
     ['/name', '/type'],
     ['/genre', '/found']
 ]
+
+reply_keyboard_swap = [['/next', '/back_to_menu']]
 markup_search = ReplyKeyboardMarkup(reply_keyboard_search, one_time_keyboard=False)
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
+markup_swipe = ReplyKeyboardMarkup(reply_keyboard_swap, one_time_keyboard=False)
 
 last_markup = markup
 
-chose_genre = False
-chose_author = False
-chose_name = False
-chose_type = False
-chose_year = False
-chose_rate = False
-chose_country = False
+chose_genre = chose_author = chose_name = chose_type = chose_year = chose_rate = chose_country = False
 
 is_choosed = False
 
-genre = ''
-author = ''
-name = ''
-type = ''
-year = ''
-rate = ''
-country = ''
+genre = author = name = type = year = rate = country = ''
 
 
 async def start(update, context):
@@ -67,7 +58,13 @@ async def start(update, context):
 
 async def help(update, context):
     await update.message.reply_text(
-        "Я бот который поможет найти тебе нужный фильм!). Для открытия меню быстрых команд напишите /open")
+        "Я бот который поможет найти тебе нужный фильм!). Для открытия меню быстрых команд напишите /open"
+        "/genre делает.."
+        "/name"
+        "/country"
+        "/year"
+        "/type"
+        "/country")
 
 
 async def close(update, context):
@@ -92,8 +89,8 @@ async def search(update, context):
 async def genres(update, context):
     global chose_genre
     text = ''
-    for i in range(len(json_response['genres'])):
-        text += f'{i + 1}. {json_response['genres'][i]['genre']}\n'
+    for i in range(len(json_response_filters['genres'])):
+        text += f'{i + 1}. {json_response_filters['genres'][i]['genre']}\n'
     await update.message.reply_text(text)
     await update.message.reply_text(f"Вот список жанров фильмов, напиши одну любую цифру из доступных")
     chose_genre = True
@@ -104,7 +101,7 @@ async def answers(update, context):
     if chose_genre:
         if update.message.text.isdigit() and (34 > int(update.message.text) > 0):
             await update.message.reply_text(
-                f'Вы выбрали жанр номер {update.message.text}: {json_response['genres'][int(update.message.text) - 1]['genre']}, теперь можете выбрать другой фильтр.')
+                f'Вы выбрали жанр номер {update.message.text}: {json_response_filters['genres'][int(update.message.text) - 1]['genre']}, теперь можете выбрать другой фильтр.')
             genre = update.message.text
         else:
             await update.message.reply_text(f'Введите существующий номер либо выберите другой фильтр')
@@ -125,7 +122,7 @@ async def answers(update, context):
 
 
 async def found(update, context):
-    request = f'https://kinopoiskapiunofficial.tech/api/v2.2/films'
+    global response, json_response
     params = {'genres': genre,
               'type': type,
               'year': year,
@@ -135,9 +132,25 @@ async def found(update, context):
     response = requests.get(request, headers=headers, params=params)
     json_response = response.json()
     x = randint(0, len(json_response['items']))
-    print(x)
     request_web = f'https://www.kinopoisk.ru/film/{json_response['items'][x]['kinopoiskId']}/'
-    await update.message.reply_html(f"<a href=\"{request_web}\">{json_response['items'][x]['nameRu']}</a>")
+    await update.message.reply_html(f"<a href=\"{request_web}\">{json_response['items'][x]['nameRu']}</a>", reply_markup=markup_swipe)
+    del json_response['items'][x]
+
+
+async def next(update, context):
+    try:
+        x = randint(0, len(json_response['items']))
+        request_web = f'https://www.kinopoisk.ru/film/{json_response['items'][x]['kinopoiskId']}/'
+        await update.message.reply_html(f"<a href=\"{request_web}\">{json_response['items'][x]['nameRu']}</a>",
+                                        reply_markup=markup_swipe)
+    except Exception:
+        await update.message.reply_text(f'Упс, кажись фильмов с таким фильтром больше не осталось!')
+
+
+async def back(update, context):
+    global genre, author, name, type, year, rate, country
+    genre = author = name = type = year = rate = country = ''
+    await search(update, context)
 
 
 def main():
@@ -149,6 +162,8 @@ def main():
     application.add_handler(CommandHandler('search', search))
     application.add_handler(CommandHandler('genre', genres))
     application.add_handler(CommandHandler('found', found))
+    application.add_handler(CommandHandler('next', next))
+    application.add_handler(CommandHandler('back_to_menu', back))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, answers))
     print(1)
     application.run_polling()
