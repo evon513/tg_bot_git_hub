@@ -97,7 +97,7 @@ async def genres(update, context):
 
 
 async def answers(update, context):
-    global genre, chose_genre
+    global genre, country
     if chose_genre:
         if update.message.text.isdigit() and (34 > int(update.message.text) > 0):
             await update.message.reply_text(
@@ -112,7 +112,12 @@ async def answers(update, context):
     elif chose_rate:
         pass
     elif chose_country:
-        pass
+        for country in json_response_filters['countries']:
+            if update.message.text.lower() == country['country'].lower():
+                await update.message.reply_text(f'Вы выбрали страну: {update.message.text.lower()}, теперь можете выбрать другой фильтр.')
+                country = update.message.text.lower().isupper()
+                return
+        await update.message.reply_text(f'Похоже такой страны в нашем списке нет!')
     elif chose_year:
         pass
     elif chose_type:
@@ -155,6 +160,37 @@ async def back(update, context):
     await search(update, context)
 
 
+async def year(update, context):
+    global chose_year
+    await update.message.reply_text(f'Введите любой год в пределах разумного')
+    chose_year = True
+
+
+async def rate(update, context):
+    global chose_rate
+    await update.message.reply_text(f'Введите рейтинг от 0 до 10, например: 6.7')
+    chose_rate = True
+
+
+async def type(update, context):
+    global chose_type
+    types = ['FILM', 'TV_SERIES', 'VIDEO', 'MINI_SERIES', 'TV_SHOW']
+    await update.message.reply_text(f'{types} Вот доступные типы фильмов, укажите один из них')
+    chose_type = True
+
+
+async def country(update, context):
+    global chose_country
+    await update.message.reply_text(f'Введите название страны по которой будет осуществляться поиск')
+    chose_country = True
+
+
+async def name(update, context):
+    global chose_name
+    await update.message.reply_text(f'Введите название или строку по которой мы будем искать фильм')
+    chose_name = True
+
+
 def main():
     application = Application.builder().token(BOT_TOKEN).build()
     application.add_handler(CommandHandler('start', start))
@@ -165,9 +201,15 @@ def main():
     application.add_handler(CommandHandler('genre', genres))
     application.add_handler(CommandHandler('found', found))
     application.add_handler(CommandHandler('next', next))
+
+    application.add_handler(CommandHandler('name', name))
+    application.add_handler(CommandHandler('year', year))
+    application.add_handler(CommandHandler('type', type))
+    application.add_handler(CommandHandler('country', country))
+    application.add_handler(CommandHandler('rate', rate))
+
     application.add_handler(CommandHandler('back_to_menu', back))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, answers))
-    print(1)
     application.run_polling()
 
 
