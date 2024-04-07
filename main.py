@@ -8,12 +8,12 @@ import logging
 from telegram.ext import Application
 from config import BOT_TOKEN
 
-headers = {"X-API-KEY": "098494fe-ff75-492d-ad4f-8833d7ff4b85"}
-request = 'https://kinopoiskapiunofficial.tech/api/v2.2/films'
+headers = {"X-API-KEY": "56980232-c008-4452-8a12-3e243cdd9764"}
+request = f'https://kinopoiskapiunofficial.tech/api/v2.2/films?ratingKinopoisk=9.7'
 response = requests.get(request, headers=headers)
 json_response = response.json()
-# with open('kinopoisk.json', 'w') as kp:
-#     json.dump(json_response, kp, ensure_ascii=False, indent=4)
+with open('kinopoisk.json', 'w') as kp:
+    json.dump(json_response, kp, ensure_ascii=False, indent=4)
 
 request_filters = 'https://kinopoiskapiunofficial.tech/api/v2.2/films/filters'
 response_filters = requests.get(request_filters, headers=headers)
@@ -31,7 +31,7 @@ reply_keyboard = [['/help', '/search'],
 reply_keyboard_search = [
     ['/author', '/country'],
     ['/rate', '/year'],
-    ['/name', '/type'],
+    ['/film_name', '/type'],
     ['/genre', '/found']
 ]
 
@@ -42,11 +42,11 @@ markup_swipe = ReplyKeyboardMarkup(reply_keyboard_swap, one_time_keyboard=False)
 
 last_markup = markup
 
-chose_genre = chose_author = chose_name = chose_type = chose_year = chose_rate = chose_country = False
+genre_dialogue = chose_author = film_name_dialogue = type_dialogue = year_dialogue = rating_dialogue = country_dialogue = False
 
 is_choosed = False
 
-genre = author = name = type = year = rate = country = ''
+genre = author = film_name = type = year = rating = country = ''
 
 
 async def start(update, context):
@@ -87,18 +87,18 @@ async def search(update, context):
 
 
 async def genres(update, context):
-    global chose_genre
+    global genre_dialogue
     text = ''
     for i in range(len(json_response_filters['genres'])):
         text += f'{i + 1}. {json_response_filters['genres'][i]['genre']}\n'
     await update.message.reply_text(text)
     await update.message.reply_text(f"Вот список жанров фильмов, напиши одну любую цифру из доступных")
-    chose_genre = True
+    genre_dialogue = True
 
 
 async def answers(update, context):
-    global genre, country
-    if chose_genre:
+    global genre, country, rating, year
+    if genre_dialogue:
         if update.message.text.isdigit() and (34 > int(update.message.text) > 0):
             await update.message.reply_text(
                 f'Вы выбрали жанр номер {update.message.text}: {json_response_filters['genres'][int(update.message.text) - 1]['genre']}, теперь можете выбрать другой фильтр.')
@@ -107,20 +107,34 @@ async def answers(update, context):
             await update.message.reply_text(f'Введите существующий номер либо выберите другой фильтр')
     elif chose_author:
         pass
-    elif chose_name:
+    elif film_name_dialogue:
         pass
-    elif chose_rate:
-        pass
-    elif chose_country:
-        for country in json_response_filters['countries']:
-            if update.message.text.lower() == country['country'].lower():
-                await update.message.reply_text(f'Вы выбрали страну: {update.message.text.lower()}, теперь можете выбрать другой фильтр.')
-                country = update.message.text.lower().isupper()
+    elif rating_dialogue:
+        if update.message.text.isdigit():
+            if 0 < float(update.message.text) <= 10:
+                await update.message.reply_text(f'Вы ввели рейтинг:{update.message.text}, теперь можете выбрать другой фильтр.')
+                rating = float(update.message.text)
+            else:
+                await update.message.reply_text(f'Вы можете вводить рейтинг от 0 до 10')
+        else:
+            await update.message.reply_text(f'Введите цифру, например: 6.7')
+    elif country_dialogue:
+        for x in json_response_filters['countries']:
+            if update.message.text.lower() == x['country'].lower():
+                await update.message.reply_text(f'Вы выбрали страну: {update.message.text.lower().capitalize()}, теперь можете выбрать другой фильтр.')
+                country = x['id']
                 return
         await update.message.reply_text(f'Похоже такой страны в нашем списке нет!')
-    elif chose_year:
-        pass
-    elif chose_type:
+    elif year_dialogue:
+        if update.message.text.isdigit():
+            if int(update.message.text) > 2024:
+                await update.message.reply_text(f'Фильмов из будущего у нас нет! приходите в {update.message.text} году')
+            else:
+                await update.message.reply_text(f'Вы выбрали {update.message.text} год')
+                year = update.message.text
+        else:
+            await update.message.reply_text(f'Введите пожалуйста число')
+    elif type_dialogue:
         pass
     else:
         await update.message.reply_text(f'Выберите фильтр либо введите команду /found для поиска фильма {genre}')
@@ -132,13 +146,14 @@ async def found(update, context):
               'type': type,
               'year': year,
               'countries': country,
-              'nameRu': name,
-              'ratingKinopoisk': rate}
+              'nameRu': film_name,
+              'ratingFilmCritics': rating}
     response = requests.get(request, headers=headers, params=params)
     json_response = response.json()
     x = randint(0, len(json_response['items']) - 1)
     request_web = f'https://www.kinopoisk.ru/film/{json_response['items'][x]['kinopoiskId']}/'
-    await update.message.reply_html(f"<a href=\"{request_web}\">{json_response['items'][x]['nameRu']}</a>", reply_markup=markup_swipe)
+    await update.message.reply_html(f"<a href=\"{request_web}\">{json_response['items'][x]['nameRu']}</a>, {json_response['items'][x]['year']} год"
+                                    , reply_markup=markup_swipe)
     del json_response['items'][x]
 
 
@@ -147,7 +162,7 @@ async def next(update, context):
     try:
         x = randint(0, len(json_response['items']) - 1)
         request_web = f'https://www.kinopoisk.ru/film/{json_response['items'][x]['kinopoiskId']}/'
-        await update.message.reply_html(f"<a href=\"{request_web}\">{json_response['items'][x]['nameRu']}</a>",
+        await update.message.reply_html(f"<a href=\"{request_web}\">{json_response['items'][x]['nameRu']}</a>, {json_response['items'][x]['year']} год",
                                         reply_markup=markup_swipe)
         del json_response['items'][x]
     except Exception:
@@ -155,40 +170,40 @@ async def next(update, context):
 
 
 async def back(update, context):
-    global genre, author, name, type, year, rate, country
-    genre = author = name = type = year = rate = country = ''
+    global genre, author, film_name, type, year, rating, country
+    genre = author = film_name = type = year = rating = country = ''
     await search(update, context)
 
 
-async def year(update, context):
-    global chose_year
+async def year_function(update, context):
+    global year_dialogue
     await update.message.reply_text(f'Введите любой год в пределах разумного')
-    chose_year = True
+    year_dialogue = True
 
 
-async def rate(update, context):
-    global chose_rate
+async def rate_function(update, context):
+    global rating_dialogue
     await update.message.reply_text(f'Введите рейтинг от 0 до 10, например: 6.7')
-    chose_rate = True
+    rating_dialogue = True
 
 
-async def type(update, context):
-    global chose_type
+async def type_function(update, context):
+    global type_dialogue
     types = ['FILM', 'TV_SERIES', 'VIDEO', 'MINI_SERIES', 'TV_SHOW']
     await update.message.reply_text(f'{types} Вот доступные типы фильмов, укажите один из них')
-    chose_type = True
+    type_dialogue = True
 
 
-async def country(update, context):
-    global chose_country
+async def country_function(update, context):
+    global country_dialogue
     await update.message.reply_text(f'Введите название страны по которой будет осуществляться поиск')
-    chose_country = True
+    country_dialogue = True
 
 
-async def name(update, context):
-    global chose_name
+async def film_name_function(update, context):
+    global film_name_dialogue
     await update.message.reply_text(f'Введите название или строку по которой мы будем искать фильм')
-    chose_name = True
+    film_name_dialogue = True
 
 
 def main():
@@ -202,11 +217,11 @@ def main():
     application.add_handler(CommandHandler('found', found))
     application.add_handler(CommandHandler('next', next))
 
-    application.add_handler(CommandHandler('name', name))
-    application.add_handler(CommandHandler('year', year))
-    application.add_handler(CommandHandler('type', type))
-    application.add_handler(CommandHandler('country', country))
-    application.add_handler(CommandHandler('rate', rate))
+    application.add_handler(CommandHandler('film_name', film_name_function))
+    application.add_handler(CommandHandler('year', year_function))
+    application.add_handler(CommandHandler('type', type_function))
+    application.add_handler(CommandHandler('country', country_function))
+    application.add_handler(CommandHandler('rate', rate_function))
 
     application.add_handler(CommandHandler('back_to_menu', back))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, answers))
