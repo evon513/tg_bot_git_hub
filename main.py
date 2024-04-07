@@ -8,16 +8,31 @@ import logging
 from telegram.ext import Application
 from config import BOT_TOKEN
 
-headers = {"X-API-KEY": "56980232-c008-4452-8a12-3e243cdd9764"}
-request = f'https://kinopoiskapiunofficial.tech/api/v2.2/films?ratingKinopoisk=9.7'
+# headers = {"X-API-KEY": "56980232-c008-4452-8a12-3e243cdd9764"}
+# request = f'https://kinopoiskapiunofficial.tech/api/v2.2/films?ratingKinopoisk=9.7'
+# response = requests.get(request, headers=headers)
+# json_response = response.json()
+# with open('kinopoisk.json', 'w') as kp:
+#     json.dump(json_response, kp, ensure_ascii=False, indent=4)
+
+headers = {"X-API-KEY": "13KFM42-2QQ40P8-HP85Q09-8EV5DWQ"}
+request = f'https://api.kinopoisk.dev/v1.4/movie'
 response = requests.get(request, headers=headers)
 json_response = response.json()
-with open('kinopoisk.json', 'w') as kp:
+with open('kinopoisk.json', 'w', encoding='utf-8') as kp:
     json.dump(json_response, kp, ensure_ascii=False, indent=4)
 
-request_filters = 'https://kinopoiskapiunofficial.tech/api/v2.2/films/filters'
-response_filters = requests.get(request_filters, headers=headers)
-json_response_filters = response_filters.json()
+request_genres = 'https://api.kinopoisk.dev/v1/movie/possible-values-by-field?field=genres.name'
+response_genres = requests.get(request_genres, headers=headers)
+json_response_genres = response_genres.json()
+
+request_countries = 'https://api.kinopoisk.dev/v1/movie/possible-values-by-field?field=countries.name'
+response_countries = requests.get(request_countries, headers=headers)
+json_response_countries = response_countries.json()
+
+request_types = 'https://api.kinopoisk.dev/v1/movie/possible-values-by-field?field=type'
+response_types = requests.get(request_types, headers=headers)
+json_response_types = response_types.json()
 
 # logging.basicConfig(
 #     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG
@@ -89,20 +104,20 @@ async def search(update, context):
 async def genres(update, context):
     global genre_dialogue
     text = ''
-    for i in range(len(json_response_filters['genres'])):
-        text += f'{i + 1}. {json_response_filters['genres'][i]['genre']}\n'
+    for i in range(len(json_response_genres)):
+        text += f'{i + 1}. {json_response_genres[i]['name']}\n'
     await update.message.reply_text(text)
     await update.message.reply_text(f"Вот список жанров фильмов, напиши одну любую цифру из доступных")
     genre_dialogue = True
 
 
 async def answers(update, context):
-    global genre, country, rating, year
+    global genre, country, rating, year, type
     if genre_dialogue:
-        if update.message.text.isdigit() and (34 > int(update.message.text) > 0):
+        if update.message.text.isdigit() and (33 > int(update.message.text) > 0):
             await update.message.reply_text(
-                f'Вы выбрали жанр номер {update.message.text}: {json_response_filters['genres'][int(update.message.text) - 1]['genre']}, теперь можете выбрать другой фильтр.')
-            genre = update.message.text
+                f'Вы выбрали жанр номер {update.message.text}: {json_response_genres[int(update.message.text) - 1]['name']}, теперь можете выбрать другой фильтр.')
+            genre = json_response_genres[int(update.message.text) - 1]['name']
         else:
             await update.message.reply_text(f'Введите существующий номер либо выберите другой фильтр')
     elif chose_author:
@@ -116,13 +131,19 @@ async def answers(update, context):
                 rating = float(update.message.text)
             else:
                 await update.message.reply_text(f'Вы можете вводить рейтинг от 0 до 10')
+        elif update.message.text.split('-')[0].isdigit() and update.message.text.split('-')[1].isdigit():
+            if 0 < float(update.message.text.split('-')[0]) <= 10 and 0 < float(update.message.text.split('-')[1]) <= 10:
+                await update.message.reply_text(f'Вы ввели диапозон рейтинга:{update.message.text}, теперь можете выбрать другой фильтр.')
+                rating = update.message.text
+            else:
+                await update.message.reply_text(f'Вы можете вводить диапазон рейтинга от 0 до 10')
         else:
             await update.message.reply_text(f'Введите цифру, например: 6.7')
     elif country_dialogue:
-        for x in json_response_filters['countries']:
-            if update.message.text.lower() == x['country'].lower():
-                await update.message.reply_text(f'Вы выбрали страну: {update.message.text.lower().capitalize()}, теперь можете выбрать другой фильтр.')
-                country = x['id']
+        for x in json_response_countries:
+            if update.message.text.lower() == x['name'].lower():
+                await update.message.reply_text(f'Вы выбрали страну: {x['name']}, теперь можете выбрать другой фильтр.')
+                country = x['name']
                 return
         await update.message.reply_text(f'Похоже такой страны в нашем списке нет!')
     elif year_dialogue:
@@ -135,36 +156,34 @@ async def answers(update, context):
         else:
             await update.message.reply_text(f'Введите пожалуйста число')
     elif type_dialogue:
-        pass
+        if update.message.text.isdigit():
+            if 6 > int(update.message.text) > 0:
+                await update.message.reply_text(f'Вы выбрали тип номер {update.message.text}: {json_response_types[int(update.message.text) - 1]['name']}')
+                type = json_response_types[int(update.message.text) - 1]['name']
     else:
         await update.message.reply_text(f'Выберите фильтр либо введите команду /found для поиска фильма {genre}')
 
 
 async def found(update, context):
-    global response, json_response
-    params = {'genres': genre,
-              'type': type,
-              'year': year,
-              'countries': country,
-              'nameRu': film_name,
-              'ratingFilmCritics': rating}
+    global response, json_response, headers, request
+    params = {'genres.name': genre}
     response = requests.get(request, headers=headers, params=params)
     json_response = response.json()
-    x = randint(0, len(json_response['items']) - 1)
-    request_web = f'https://www.kinopoisk.ru/film/{json_response['items'][x]['kinopoiskId']}/'
-    await update.message.reply_html(f"<a href=\"{request_web}\">{json_response['items'][x]['nameRu']}</a>, {json_response['items'][x]['year']} год"
-                                    , reply_markup=markup_swipe)
-    del json_response['items'][x]
+    x = randint(0, len(json_response['docs']) - 1)
+    # request_web = f'https://www.kinopoisk.ru/film/{json_response['items'][x]['kinopoiskId']}/'
+    # await update.message.reply_html(f"<a href=\"{request_web}\">{json_response['items'][x]['nameRu']}</a>, {json_response['items'][x]['year']} год"
+    #                                 , reply_markup=markup_swipe)
+    await update.message.reply_text(f'{json_response['docs'][x]['name']}, {json_response['docs'][x]['year']}, {json_response['docs'][x]['ageRating']}+\n{json_response['docs'][x]['description']}', reply_markup=markup_swipe)
+    del json_response['docs'][x]
 
 
 async def next(update, context):
     global json_response
     try:
-        x = randint(0, len(json_response['items']) - 1)
-        request_web = f'https://www.kinopoisk.ru/film/{json_response['items'][x]['kinopoiskId']}/'
-        await update.message.reply_html(f"<a href=\"{request_web}\">{json_response['items'][x]['nameRu']}</a>, {json_response['items'][x]['year']} год",
-                                        reply_markup=markup_swipe)
-        del json_response['items'][x]
+        x = randint(0, len(json_response['docs']) - 1)
+        await update.message.reply_text(
+            f'{json_response['docs'][x]['name']}, {json_response['docs'][x]['year']}, {json_response['docs'][x]['ageRating']}+\n{json_response['docs'][x]['description']}')
+        del json_response['docs'][x]
     except Exception:
         await update.message.reply_text(f'Упс, кажись фильмов с таким фильтром больше не осталось!')
 
@@ -177,20 +196,22 @@ async def back(update, context):
 
 async def year_function(update, context):
     global year_dialogue
-    await update.message.reply_text(f'Введите любой год в пределах разумного')
+    await update.message.reply_text(f'Введите любой год в пределах разумного, также через "-" вы можете указать диапазон поиска: 2020-2023')
     year_dialogue = True
 
 
 async def rate_function(update, context):
     global rating_dialogue
-    await update.message.reply_text(f'Введите рейтинг от 0 до 10, например: 6.7')
+    await update.message.reply_text(f'Введите рейтинг от 0 до 10, например: 6.7, также через "-" вы можете указать диапазон поиска: 4.5-10')
     rating_dialogue = True
 
 
 async def type_function(update, context):
     global type_dialogue
-    types = ['FILM', 'TV_SERIES', 'VIDEO', 'MINI_SERIES', 'TV_SHOW']
-    await update.message.reply_text(f'{types} Вот доступные типы фильмов, укажите один из них')
+    text = ''
+    for i, x in enumerate(json_response_types):
+        text += f'{i + 1}. {x['name']}\n'
+    await update.message.reply_text(f'{text}Вот доступные типы фильмов, укажите цифру одного из них')
     type_dialogue = True
 
 
