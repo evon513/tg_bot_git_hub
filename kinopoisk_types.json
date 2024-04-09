@@ -1,0 +1,22 @@
+[
+    {
+        "name": "animated-series",
+        "slug": "animated-series"
+    },
+    {
+        "name": "anime",
+        "slug": "anime"
+    },
+    {
+        "name": "cartoon",
+        "slug": "cartoon"
+    },
+    {
+        "name": "movie",
+        "slug": "movie"
+    },
+    {
+        "name": "tv-series",
+        "slug": "tv-series"
+    }
+]

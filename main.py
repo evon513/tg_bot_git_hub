@@ -10,14 +10,13 @@ from config import BOT_TOKEN
 
 headers = {"X-API-KEY": "13KFM42-2QQ40P8-HP85Q09-8EV5DWQ"}
 request = f'https://api.kinopoisk.dev/v1.4/movie'
-response = requests.get(request, headers=headers)
-json_response = response.json()
-json_response_countries = ''
-json_response_types = ''
-json_response_genres = ''
-with open('kinopoisk.json', 'w', encoding='utf-16') as kp:
-    json.dump(json_response, kp, indent=4, ensure_ascii=False)
-
+json_response = ''
+with open('kinopoisk_genres.json', encoding='utf-8') as kp:
+    json_response_genres = json.load(kp)
+with open('kinopoisk_types.json', encoding='utf-8') as kp:
+    json_response_types = json.load(kp)
+with open('kinopoisk_countries.json', encoding='utf-8') as kp:
+    json_response_countries = json.load(kp)
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG
@@ -44,9 +43,7 @@ last_markup = markup
 
 genre_dialogue = chose_author = film_name_dialogue = type_dialogue = year_dialogue = rating_dialogue = country_dialogue = False
 
-genre = author = film_name = type = country = ''
-year = '1874-2024'
-rating = '0-10'
+genre = author = film_name = type = country = year = rating = None
 
 
 async def start(update, context):
@@ -59,12 +56,12 @@ async def start(update, context):
 async def help(update, context):
     await update.message.reply_text(
         "Я бот который поможет найти тебе нужный фильм!). Для открытия меню быстрых команд напишите /open"
-        "/genre делает.."
-        "/name"
-        "/country"
-        "/year"
-        "/type"
-        "/country")
+        "\n/genre делает.."
+        "\n/name"
+        "\n/country"
+        "\n/year"
+        "\n/type"
+        "\n/country")
 
 
 async def close(update, context):
@@ -87,10 +84,7 @@ async def search(update, context):
 
 
 async def genres(update, context):
-    global genre_dialogue, type_dialogue, rating_dialogue, year_dialogue, country_dialogue, json_response_genres
-    request_genres = 'https://api.kinopoisk.dev/v1/movie/possible-values-by-field?field=genres.name'
-    response_genres = requests.get(request_genres, headers=headers)
-    json_response_genres = response_genres.json()
+    global genre_dialogue, type_dialogue, rating_dialogue, year_dialogue, country_dialogue
     genre_dialogue = type_dialogue = year_dialogue = rating_dialogue = country_dialogue = False
     text = ''
     for i in range(len(json_response_genres)):
@@ -162,25 +156,27 @@ async def answers(update, context):
 
 
 async def found(update, context):
-    global json_response, response
+    global json_response
     params = {'genres.name': genre,
               'year': year,
               'countries.name': country,
+              'type': type,
               'rating.kp': rating}
     response = requests.get(request, headers=headers, params=params)
-    print(response)
     json_response = response.json()
-    print(json_response)
-    x = randint(0, len(json_response['docs']) - 1)
-    request_web = f'https://www.kinopoisk.ru/film/{json_response['docs'][x]['id']}/'
-    await update.message.reply_text(f'<a href=\"{request_web}\">{json_response['docs'][x]['name']}</a>,'
-                                    f' {json_response['docs'][x]['year']}, {json_response['docs'][x]['type']}, '
-                                    f'{json_response['docs'][x]['ageRating']}+'
-                                    f'\nДлительность фильма: {json_response['docs'][x]['movieLength']} мин.'
-                                    f'\nРейтинг фильма: {json_response['docs'][x]['rating.kp']}'
-                                    f'\n{json_response['docs'][x]['description']}', reply_markup=markup_swipe)
-
-    del json_response['docs'][x]
+    try:
+        x = randint(0, len(json_response['docs']) - 1)
+        request_web = f'https://www.kinopoisk.ru/film/{json_response['docs'][x]['id']}/'
+        await update.message.reply_html(f"<a href=\"{request_web}\">{json_response['docs'][x]['name']}</a> "
+                                        f"{json_response['docs'][x]['year']}, {json_response['docs'][x]['type']} "
+                                        f"{json_response['docs'][x]['ageRating']}+"
+                                        f"\nДлительность фильма: {json_response['docs'][x]['movieLength']} мин."
+                                        f"\nРейтинг фильма: {json_response['docs'][x]['rating']['kp']}"
+                                        f"\n{json_response['docs'][x]['description']}",
+                                        reply_markup=markup_swipe)
+        del json_response['docs'][x]
+    except Exception:
+        await update.message.reply_text('Oops..')
 
 
 async def next(update, context):
@@ -188,12 +184,13 @@ async def next(update, context):
     try:
         x = randint(0, len(json_response['docs']) - 1)
         request_web = f'https://www.kinopoisk.ru/film/{json_response['docs'][x]['id']}/'
-        await update.message.reply_text(f'<a href=\"{request_web}\">{json_response['docs'][x]['name']}</a>,'
-                                        f' {json_response['docs'][x]['year']}, {json_response['docs'][x]['type']}, '
-                                        f'{json_response['docs'][x]['ageRating']}+'
-                                        f'\nДлительность фильма: {json_response['docs'][x]['movieLength']} мин.'
-                                        f'\nРейтинг фильма: {json_response['docs'][x]['rating.kp']}'
-                                        f'\n{json_response['docs'][x]['description']}', reply_markup=markup_swipe)
+        await update.message.reply_html(f"<a href=\"{request_web}\">{json_response['docs'][x]['name']}</a> "
+                                        f"{json_response['docs'][x]['year']}, {json_response['docs'][x]['type']} "
+                                        f"{json_response['docs'][x]['ageRating']}+"
+                                        f"\nДлительность фильма: {json_response['docs'][x]['movieLength']} мин."
+                                        f"\nРейтинг фильма: {json_response['docs'][x]['rating']['kp']}"
+                                        f"\n{json_response['docs'][x]['description']}",
+                                        reply_markup=markup_swipe)
         del json_response['docs'][x]
     except Exception:
         await update.message.reply_text(f'Упс, кажись фильмов с таким фильтром больше не осталось!')
@@ -201,7 +198,7 @@ async def next(update, context):
 
 async def back(update, context):
     global genre, author, film_name, type, year, rating, country
-    genre = author = film_name = type = country = ''
+    genre = author = film_name = type = country = None
     year = '1874-2024'
     rating = '0-10'
     await search(update, context)
@@ -222,10 +219,7 @@ async def rate_function(update, context):
 
 
 async def type_function(update, context):
-    global genre_dialogue, type_dialogue, rating_dialogue, year_dialogue, country_dialogue, json_response_types
-    request_types = 'https://api.kinopoisk.dev/v1/movie/possible-values-by-field?field=type'
-    response_types = requests.get(request_types, headers=headers)
-    json_response_types = response_types.json()
+    global genre_dialogue, type_dialogue, rating_dialogue, year_dialogue, country_dialogue
     genre_dialogue = type_dialogue = year_dialogue = rating_dialogue = country_dialogue = False
     text = ''
     for i, x in enumerate(json_response_types):
@@ -235,10 +229,7 @@ async def type_function(update, context):
 
 
 async def country_function(update, context):
-    global genre_dialogue, type_dialogue, rating_dialogue, year_dialogue, country_dialogue, json_response_countries
-    request_countries = 'https://api.kinopoisk.dev/v1/movie/possible-values-by-field?field=countries.name'
-    response_countries = requests.get(request_countries, headers=headers)
-    json_response_countries = response_countries.json()
+    global genre_dialogue, type_dialogue, rating_dialogue, year_dialogue, country_dialogue
     genre_dialogue = type_dialogue = year_dialogue = rating_dialogue = country_dialogue = False
     await update.message.reply_text(f'Введите название страны по которой будет осуществляться поиск')
     country_dialogue = True
