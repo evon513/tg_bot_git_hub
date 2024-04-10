@@ -41,9 +41,9 @@ markup_swipe = ReplyKeyboardMarkup(reply_keyboard_swap, one_time_keyboard=False)
 
 last_markup = markup
 
-genre_dialogue = chose_author = film_name_dialogue = type_dialogue = year_dialogue = rating_dialogue = country_dialogue = False
+genre_dialogue = author_dialogue = length_dialogue = type_dialogue = year_dialogue = rating_dialogue = country_dialogue = False
 
-genre = author = film_name = type = country = year = rating = None
+genre = author = film_length = type = country = year = rating = None
 
 
 async def start(update, context):
@@ -95,7 +95,7 @@ async def genres(update, context):
 
 
 async def answers(update, context):
-    global genre, country, rating, year, type
+    global genre, country, rating, year, type, film_length, author
     if genre_dialogue:
         if update.message.text.isdigit() and (33 > int(update.message.text) > 0):
             await update.message.reply_text(
@@ -103,10 +103,17 @@ async def answers(update, context):
             genre = json_response_genres[int(update.message.text) - 1]['name']
         else:
             await update.message.reply_text(f'Введите существующий номер либо выберите другой фильтр')
-    elif chose_author:
+    elif author_dialogue:
         pass
-    elif film_name_dialogue:
-        pass
+    elif length_dialogue:
+        if update.message.text.isdigit():
+            await update.message.reply_text(f'Вы ввели длительность: {update.message.text} мин.')
+            film_length = update.message.text
+        elif update.message.text.split('-')[0].isdigit() and update.message.text.split('-')[1].isdigit():
+            await update.message.reply_text(f'Вы ввели диапазон длительности длительности: {update.message.text} мин.')
+            film_length = update.message.text
+        else:
+            await update.message.reply_text(f'Введите число или диапазон чисел!')
     elif rating_dialogue:
         if update.message.text.isdigit():
             if 0 < float(update.message.text) <= 10:
@@ -197,30 +204,28 @@ async def next(update, context):
 
 
 async def back(update, context):
-    global genre, author, film_name, type, year, rating, country
-    genre = author = film_name = type = country = None
-    year = '1874-2024'
-    rating = '0-10'
+    global genre, author, film_length, type, year, rating, country
+    genre = author = film_length = type = country = year = rating = None
     await search(update, context)
 
 
 async def year_function(update, context):
-    global genre_dialogue, type_dialogue, rating_dialogue, year_dialogue, country_dialogue
-    genre_dialogue = type_dialogue = year_dialogue = rating_dialogue = country_dialogue = False
+    global genre_dialogue, type_dialogue, rating_dialogue, year_dialogue, country_dialogue, length_dialogue, author_dialogue
+    genre_dialogue = type_dialogue = year_dialogue = rating_dialogue = country_dialogue = length_dialogue = author_dialogue = False
     await update.message.reply_text(f'Введите любой год в пределах разумного, также через "-" вы можете указать диапазон поиска: 2020-2023')
     year_dialogue = True
 
 
 async def rate_function(update, context):
-    global genre_dialogue, type_dialogue, rating_dialogue, year_dialogue, country_dialogue
-    genre_dialogue = type_dialogue = year_dialogue = rating_dialogue = country_dialogue = False
+    global genre_dialogue, type_dialogue, rating_dialogue, year_dialogue, country_dialogue, length_dialogue, author_dialogue
+    genre_dialogue = type_dialogue = year_dialogue = rating_dialogue = country_dialogue = length_dialogue = author_dialogue = False
     await update.message.reply_text(f'Введите рейтинг от 0 до 10, например: 6.7, также через "-" вы можете указать диапазон поиска: 4.5-10')
     rating_dialogue = True
 
 
 async def type_function(update, context):
-    global genre_dialogue, type_dialogue, rating_dialogue, year_dialogue, country_dialogue
-    genre_dialogue = type_dialogue = year_dialogue = rating_dialogue = country_dialogue = False
+    global genre_dialogue, type_dialogue, rating_dialogue, year_dialogue, country_dialogue, length_dialogue, author_dialogue
+    genre_dialogue = type_dialogue = year_dialogue = rating_dialogue = country_dialogue = length_dialogue = author_dialogue = False
     text = ''
     for i, x in enumerate(json_response_types):
         text += f'{i + 1}. {x['name']}\n'
@@ -229,16 +234,17 @@ async def type_function(update, context):
 
 
 async def country_function(update, context):
-    global genre_dialogue, type_dialogue, rating_dialogue, year_dialogue, country_dialogue
-    genre_dialogue = type_dialogue = year_dialogue = rating_dialogue = country_dialogue = False
+    global genre_dialogue, type_dialogue, rating_dialogue, year_dialogue, country_dialogue, length_dialogue, author_dialogue
+    genre_dialogue = type_dialogue = year_dialogue = rating_dialogue = country_dialogue = length_dialogue = author_dialogue = False
     await update.message.reply_text(f'Введите название страны по которой будет осуществляться поиск')
     country_dialogue = True
 
 
-async def film_name_function(update, context):
-    global film_name_dialogue
-    await update.message.reply_text(f'Введите название или строку по которой мы будем искать фильм')
-    film_name_dialogue = True
+async def film_length_function(update, context):
+    global genre_dialogue, type_dialogue, rating_dialogue, year_dialogue, country_dialogue, length_dialogue, author_dialogue
+    genre_dialogue = type_dialogue = year_dialogue = rating_dialogue = country_dialogue = length_dialogue = author_dialogue = False
+    await update.message.reply_text(f'Введите длину или диапазон фильма в минутах, например: 60-120')
+    length_dialogue = True
 
 
 def main():
@@ -252,7 +258,7 @@ def main():
     application.add_handler(CommandHandler('found', found))
     application.add_handler(CommandHandler('next', next))
 
-    application.add_handler(CommandHandler('film_name', film_name_function))
+    application.add_handler(CommandHandler('film_length', film_length_function))
     application.add_handler(CommandHandler('year', year_function))
     application.add_handler(CommandHandler('type', type_function))
     application.add_handler(CommandHandler('country', country_function))
