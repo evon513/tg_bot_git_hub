@@ -56,12 +56,13 @@ async def start(update, context):
 async def help(update, context):
     await update.message.reply_text(
         "Я бот который поможет найти тебе нужный фильм!). Для открытия меню быстрых команд напишите /open"
-        "\n/genre делает.."
-        "\n/name"
-        "\n/country"
-        "\n/year"
-        "\n/type"
-        "\n/country")
+        "\nПояснение функций:"
+        "\n/genre Выдает список жанров, их существует всего 33, ты должен указать одну из цифр списка, жанры упорядочены по алфавиту."
+        "\n/film_length Предлагает ввести длину фильма или диапазон в минутах, если ввести 50-120, то бот выдаст фильмы, которые не короче 50 минут и не длиннее 120 минут."
+        "\n/country Предлагает ввести страну по которой будет искаться фильм. Если ввести несуществующую страну, то бот скажет, что такой страны в нашем списке нет."
+        "\n/year Предлагает ввести год издания фильма или диапазон, если ввести 2020-2023, то бот выдаст фильмы, которые вышли не раньше 2020 года и не позже 2023 года "
+        "\n/type Дает на выбор 5 типов, ты должен указать один из них, написав его цифру"
+        "\n/search Показывает все возможные команды для выбора фильма")
 
 
 async def close(update, context):
@@ -99,67 +100,71 @@ async def answers(update, context):
     if genre_dialogue:
         if update.message.text.isdigit() and (33 > int(update.message.text) > 0):
             await update.message.reply_text(
-                f'Вы выбрали жанр номер {update.message.text}: {json_response_genres[int(update.message.text) - 1]['name']}, теперь можете выбрать другой фильтр.')
+                f'Вы выбрали жанр номер {update.message.text}: {json_response_genres[int(update.message.text) - 1]['name']}, теперь можете выбрать другой фильтр или ввести команду /found')
             genre = json_response_genres[int(update.message.text) - 1]['name']
         else:
-            await update.message.reply_text(f'Введите существующий номер либо выберите другой фильтр')
+            await update.message.reply_text(f'Введите существующий номер!')
     elif author_dialogue:
         pass
     elif length_dialogue:
         if update.message.text.isdigit():
-            await update.message.reply_text(f'Вы ввели длительность: {update.message.text} мин.')
+            await update.message.reply_text(f'Вы ввели длительность: {update.message.text} мин. Теперь вы можете выбрать другой фильтр или ввести команду /found')
             film_length = update.message.text
         elif update.message.text.split('-')[0].isdigit() and update.message.text.split('-')[1].isdigit():
-            await update.message.reply_text(f'Вы ввели диапазон длительности длительности: {update.message.text} мин.')
+            await update.message.reply_text(f'Вы ввели диапазон длительности длительности: {update.message.text} мин. Теперь вы можете выбрать другой фильтр или ввести команду /found')
             film_length = update.message.text
         else:
             await update.message.reply_text(f'Введите число или диапазон чисел!')
     elif rating_dialogue:
         if update.message.text.isdigit():
             if 0 < float(update.message.text) <= 10:
-                await update.message.reply_text(f'Вы ввели рейтинг:{update.message.text}, теперь можете выбрать другой фильтр.')
+                await update.message.reply_text(f'Вы ввели рейтинг: {update.message.text}. Теперь вы можете выбрать другой фильтр или ввести команду /found')
                 rating = float(update.message.text)
             else:
-                await update.message.reply_text(f'Вы можете вводить рейтинг от 0 до 10')
+                await update.message.reply_text(f'Вы можете вводить рейтинг от 0 до 10!')
         elif update.message.text.split('-')[0].isdigit() and update.message.text.split('-')[1].isdigit():
-            if 0 < float(update.message.text.split('-')[0]) <= 10 and 0 < float(update.message.text.split('-')[1]) <= 10:
-                await update.message.reply_text(f'Вы ввели диапозон рейтинга:{update.message.text}, теперь можете выбрать другой фильтр.')
+            if (0 < float(update.message.text.split('-')[0]) <= 10) and (0 < float(update.message.text.split('-')[1]) <= 10):
+                await update.message.reply_text(f'Вы ввели диапозон рейтинга: {update.message.text}. Теперь вы можете выбрать другой фильтр или ввести команду /found')
                 rating = update.message.text
             else:
-                await update.message.reply_text(f'Вы можете вводить диапазон рейтинга от 0 до 10')
+                await update.message.reply_text(f'Вы можете вводить диапазон рейтинга от 0 до 10!')
         else:
-            await update.message.reply_text(f'Введите цифру, например: 6.7')
+            await update.message.reply_text(f'Введите цифру!')
     elif country_dialogue:
         for x in json_response_countries:
             if update.message.text.lower() == x['name'].lower():
-                await update.message.reply_text(f'Вы выбрали страну: {x['name']}, теперь можете выбрать другой фильтр.')
+                await update.message.reply_text(f'Вы выбрали страну: {x['name']}. Теперь вы можете выбрать другой фильтр или ввести команду /found')
                 country = x['name']
                 return
         await update.message.reply_text(f'Похоже такой страны в нашем списке нет!')
     elif year_dialogue:
         if update.message.text.isdigit():
             if int(update.message.text) > 2024:
-                await update.message.reply_text(f'Фильмов из будущего у нас нет! приходите в {update.message.text} году')
+                await update.message.reply_text(f'Фильмов из будущего у нас нет! приходите в {update.message.text} году!')
             elif int(update.message.text) < 1874:
                 await update.message.reply_text(f'Фильмы начинаются с 1874 года!')
             else:
-                await update.message.reply_text(f'Вы выбрали {update.message.text} год')
+                await update.message.reply_text(f'Вы выбрали {update.message.text} год. Теперь вы можете выбрать другой фильтр или ввести команду /found')
                 year = update.message.text
         elif update.message.text.split('-')[0].isdigit() and update.message.text.split('-')[1].isdigit():
             if (2025 > int(update.message.text.split('-')[0]) > 1874) and (2025 > int(update.message.text.split('-')[1]) > 1874):
-                await update.message.reply_text(f'Вы выбрали диапазон {update.message.text} год')
+                await update.message.reply_text(f'Вы выбрали диапазон {update.message.text} год. Теперь вы можете выбрать другой фильтр или ввести команду /found')
                 year = update.message.text
             else:
-                await update.message.reply_text(f'Числа не могут быть меньше 1874 и больше нынешнего года')
+                await update.message.reply_text(f'Числа не могут быть меньше 1874 и больше нынешнего года!')
         else:
-            await update.message.reply_text(f'Введите пожалуйста число')
+            await update.message.reply_text(f'Введите число!')
     elif type_dialogue:
         if update.message.text.isdigit():
             if 6 > int(update.message.text) > 0:
-                await update.message.reply_text(f'Вы выбрали тип номер {update.message.text}: {json_response_types[int(update.message.text) - 1]['name']}')
+                await update.message.reply_text(f'Вы выбрали тип номер {update.message.text}: {json_response_types[int(update.message.text) - 1]['name']}. Теперь вы можете выбрать другой фильтр или ввести команду /found')
                 type = json_response_types[int(update.message.text) - 1]['name']
+            else:
+                await update.message.reply_text(f'Введите цифру из списка!')
+        else:
+            await update.message.reply_text(f'Введите цифру!')
     else:
-        await update.message.reply_text(f'Выберите фильтр либо введите команду /found для поиска фильма {genre}')
+        await update.message.reply_text(f'Выберите фильтр либо введите команду /found для поиска фильма!')
 
 
 async def found(update, context):
@@ -168,7 +173,8 @@ async def found(update, context):
               'year': year,
               'countries.name': country,
               'type': type,
-              'rating.kp': rating}
+              'rating.kp': rating,
+              'movieLength': film_length}
     response = requests.get(request, headers=headers, params=params)
     json_response = response.json()
     try:
