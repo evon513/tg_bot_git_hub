@@ -11,10 +11,11 @@ from config import BOT_TOKEN
 headers = {"X-API-KEY": "13KFM42-2QQ40P8-HP85Q09-8EV5DWQ"}
 request = f'https://api.kinopoisk.dev/v1.4/movie'
 json_response = ''
-response = requests.get(request, headers=headers)
-json_response = response.json()
-with open('kinopoisk.json', 'w', encoding='utf-8') as kp:
-    json.dump(json_response, kp, ensure_ascii=False, indent=4)
+# response = requests.get(request, headers=headers)
+# json_response = response.json()
+#
+# with open('kinopoisk.json', 'w', encoding='utf-8') as kp:
+#     json.dump(json_response, kp, ensure_ascii=False, indent=4)
 
 with open('kinopoisk_genres.json', encoding='utf-8') as kp:
     json_response_genres = json.load(kp)
@@ -37,7 +38,7 @@ reply_keyboard = [['/help', '/search'],
 reply_keyboard_search = [
     ['/genre', '/film_length', '/country'],
     ['/year', '/type', '/rate'],
-    ['/author', '/found', '/delete_param'],
+    ['/delete_param', '/found'],
     ['/help']
 ]
 
@@ -48,9 +49,9 @@ markup_swipe = ReplyKeyboardMarkup(reply_keyboard_swap, one_time_keyboard=False)
 
 last_markup = markup
 
-genre_dialogue = length_dialogue = country_dialogue = year_dialogue = type_dialogue = rating_dialogue = author_dialogue = False
+genre_dialogue = length_dialogue = country_dialogue = year_dialogue = type_dialogue = rating_dialogue = delete_param_dialogue = False
 
-search_filters = {'genre': None, 'film_length': None, 'country': None, 'year': None, 'type': None, 'rate': None, 'author': None}
+search_filters = {'genre': None, 'film_length': None, 'country': None, 'year': None, 'type': None, 'rate': None}
 
 
 async def start(update, context):
@@ -71,11 +72,10 @@ async def help(update, context):
         "\n/year Предлагает ввести год издания фильма или диапазон годов, если ввести 2020-2023, то бот будет искать фильмы, которые вышли не раньше 2020 года и не позже 2023 года.\n"
         "\n/type Дает на выбор 5 типов, ты должен указать один из них, написав его цифру.\n"
         "\n/rate Предлагает ввести рейтинг фильма или диапазон рейтинга, минимальный рейтинг: 0, максимальный: 10, если ввести 6-9, то бот будет искать фильмы с рейтинг не ниже 6 и не выше 9.\n"
-        "\n/author\n"
         "\n/found Ищет подходящий фильм по жанру, длине, стране, году, типу, рейтингу, автору фильма, если не указывать фильтры поиска, то бот выдаст рандомный фильм. ВАЖНО: если снова нажать на команду, будет создаваться новый запрос и фильмы будут повторяться.\n"
-        "\n/delete_param\n"
+        "\n/delete_param Предлагает удалить 1 из фильтров либо сразу все\n"
         "\n/search Показывает все возможные команды для выбора фильтров фильма.\n"
-        "\n/next Ищет фильмы с указанными параметрами, лимит фильмов: 10.\n"
+        "\n/next Ищет фильмы с указанными параметрами. \nЛимит фильмов: 10.\n"
         "\n/back_to_menu Сбрасывает фильтры и возвращает пользователя обратно ко всем возможным командам.")
 
 
@@ -100,8 +100,8 @@ async def search(update, context):
 
 
 async def genre_function(update, context):
-    global genre_dialogue, length_dialogue, country_dialogue, year_dialogue, type_dialogue, rating_dialogue, author_dialogue
-    genre_dialogue = length_dialogue = country_dialogue = year_dialogue = type_dialogue = rating_dialogue = author_dialogue = False
+    global genre_dialogue, length_dialogue, country_dialogue, year_dialogue, type_dialogue, rating_dialogue, delete_param_dialogue
+    genre_dialogue = length_dialogue = country_dialogue = year_dialogue = type_dialogue = rating_dialogue = delete_param_dialogue = False
     text = ''
     for i in range(len(json_response_genres)):
         text += f'{i + 1}. {json_response_genres[i]['name']}\n'
@@ -111,29 +111,29 @@ async def genre_function(update, context):
 
 
 async def film_length_function(update, context):
-    global genre_dialogue, length_dialogue, country_dialogue, year_dialogue, type_dialogue, rating_dialogue, author_dialogue
-    genre_dialogue = length_dialogue = country_dialogue = year_dialogue = type_dialogue = rating_dialogue = author_dialogue = False
+    global genre_dialogue, length_dialogue, country_dialogue, year_dialogue, type_dialogue, rating_dialogue, delete_param_dialogue
+    genre_dialogue = length_dialogue = country_dialogue = year_dialogue = type_dialogue = rating_dialogue = delete_param_dialogue = False
     await update.message.reply_text(f'Введите длину или диапазон фильма в минутах, например: 60-120')
     length_dialogue = True
 
 
 async def country_function(update, context):
-    global genre_dialogue, length_dialogue, country_dialogue, year_dialogue, type_dialogue, rating_dialogue, author_dialogue
-    genre_dialogue = length_dialogue = country_dialogue = year_dialogue = type_dialogue = rating_dialogue = author_dialogue = False
+    global genre_dialogue, length_dialogue, country_dialogue, year_dialogue, type_dialogue, rating_dialogue, delete_param_dialogue
+    genre_dialogue = length_dialogue = country_dialogue = year_dialogue = type_dialogue = rating_dialogue = delete_param_dialogue = False
     await update.message.reply_text(f'Введите название страны по которой будет осуществляться поиск')
     country_dialogue = True
 
 
 async def year_function(update, context):
-    global genre_dialogue, length_dialogue, country_dialogue, year_dialogue, type_dialogue, rating_dialogue, author_dialogue
-    genre_dialogue = length_dialogue = country_dialogue = year_dialogue = type_dialogue = rating_dialogue = author_dialogue = False
+    global genre_dialogue, length_dialogue, country_dialogue, year_dialogue, type_dialogue, rating_dialogue, delete_param_dialogue
+    genre_dialogue = length_dialogue = country_dialogue = year_dialogue = type_dialogue = rating_dialogue = delete_param_dialogue = False
     await update.message.reply_text(f'Введите любой год в пределах разумного(1874-2024), также через "-" вы можете указать диапазон поиска: 2020-2023')
     year_dialogue = True
 
 
 async def type_function(update, context):
-    global genre_dialogue, length_dialogue, country_dialogue, year_dialogue, type_dialogue, rating_dialogue, author_dialogue
-    genre_dialogue = length_dialogue = country_dialogue = year_dialogue = type_dialogue = rating_dialogue = author_dialogue = False
+    global genre_dialogue, length_dialogue, country_dialogue, year_dialogue, type_dialogue, rating_dialogue, delete_param_dialogue
+    genre_dialogue = length_dialogue = country_dialogue = year_dialogue = type_dialogue = rating_dialogue = delete_param_dialogue = False
     text = ''
     for i, x in enumerate(json_response_types):
         text += f'{i + 1}. {x['name']}\n'
@@ -142,17 +142,10 @@ async def type_function(update, context):
 
 
 async def rate_function(update, context):
-    global genre_dialogue, length_dialogue, country_dialogue, year_dialogue, type_dialogue, rating_dialogue, author_dialogue
-    genre_dialogue = length_dialogue = country_dialogue = year_dialogue = type_dialogue = rating_dialogue = author_dialogue = False
+    global genre_dialogue, length_dialogue, country_dialogue, year_dialogue, type_dialogue, rating_dialogue, delete_param_dialogue
+    genre_dialogue = length_dialogue = country_dialogue = year_dialogue = type_dialogue = rating_dialogue = delete_param_dialogue = False
     await update.message.reply_text(f'Введите рейтинг от 0 до 10, например: 6.7, также через "-" вы можете указать диапазон поиска: 4.5-10')
     rating_dialogue = True
-
-
-async def author_function(update, context):
-    global genre_dialogue, length_dialogue, country_dialogue, year_dialogue, type_dialogue, rating_dialogue, author_dialogue
-    genre_dialogue = length_dialogue = country_dialogue = year_dialogue = type_dialogue = rating_dialogue = author_dialogue = False
-    await update.message.reply_text(f'')
-    author_dialogue = True
 
 
 async def found(update, context):
@@ -164,7 +157,6 @@ async def found(update, context):
               'year': search_filters['year'],
               'type': search_filters['type'],
               'rating.kp': search_filters['rate']
-              # '': search_filters['author']
               }
     response = requests.get(request, headers=headers, params=params)
     json_response = response.json()
@@ -220,14 +212,17 @@ async def next(update, context):
 
 async def back(update, context):
     global search_filters
-    search_filters = {'genre': None, 'film_length': None, 'country': None, 'year': None, 'type': None, 'rate': None, 'author': None}
+    search_filters = {'genre': None, 'film_length': None, 'country': None, 'year': None, 'type': None, 'rate': None}
     await search(update, context)
 
 
 async def delete_param_function(update, context):
+    global genre_dialogue, length_dialogue, country_dialogue, year_dialogue, type_dialogue, rating_dialogue, delete_param_dialogue
+    genre_dialogue = length_dialogue = country_dialogue = year_dialogue = type_dialogue = rating_dialogue = delete_param_dialogue = False
     await update.message.reply_text(f'Что вы хотите сделать?'
                                     f'\n1. Удалить все фильтры\n2. Удалить жанр\n3. Удалить длину\n4. Удалить страну'
-                                    f'\n5. Удалить год \n6. Удалить тип \n7. Удалить рейтинг\n8. Удалить автора')
+                                    f'\n5. Удалить год \n6. Удалить тип \n7. Удалить рейтинг')
+    delete_param_dialogue = True
 
 
 async def answers(update, context):
@@ -296,8 +291,21 @@ async def answers(update, context):
                 await update.message.reply_text(f'Вы можете вводить диапазон рейтинга от 0 до 10!')
         else:
             await update.message.reply_text(f'Введите цифру!')
-    elif author_dialogue:
-        pass
+    elif delete_param_dialogue:
+        if update.message.text.isdigit():
+            if 0 < int(update.message.text) < 8:
+                if int(update.message.text) == 1:
+                    await update.message.reply_text(f'Вы удалили все параметры. Можете задать новые или написать /found для поиска фильма')
+                    search_filters = {'genre': None, 'film_length': None, 'country': None, 'year': None, 'type': None, 'rate': None}
+                else:
+                    for i, key in enumerate(search_filters):
+                        if i == int(update.message.text) - 2:
+                            search_filters[key] = None
+                            await update.message.reply_text(f'Вы удалили параметр: {key}')
+            else:
+                await update.message.reply_text(f'Введите цифру из списка!')
+        else:
+            await update.message.reply_text(f'Введите цифру!')
     else:
         await update.message.reply_text(f'Выберите фильтр либо введите команду /found для поиска фильма!')
 
@@ -316,7 +324,7 @@ def main():
     application.add_handler(CommandHandler('year', year_function))
     application.add_handler(CommandHandler('type', type_function))
     application.add_handler(CommandHandler('rate', rate_function))
-    application.add_handler(CommandHandler('author', author_function))
+
     application.add_handler(CommandHandler('delete_param', delete_param_function))
     application.add_handler(CommandHandler('found', found))
 
