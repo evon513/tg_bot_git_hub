@@ -8,6 +8,30 @@ import logging
 from telegram.ext import Application
 from config import BOT_TOKEN
 
+# name = json_response['name']
+#         year = json_response['year']
+#         age = json_response['ageRating'] if json_response['ageRating'] != None else 0
+#         length = f'фильма: {json_response['movieLength']}' if json_response['movieLength'] != None else f'серии: {json_response['seriesLength']}'
+#         rating = json_response['rating']['kp']
+#         description = json_response['description'] if json_response['description'] != '' else \
+#         json_response['shortDescription']
+#         all_series = f'\nДлительность всех серий: {json_response['totalSeriesLength']}' if \
+#         json_response['isSeries'] == True and json_response['totalSeriesLength'] != None else ''
+#
+#         request_web = f'https://www.kinopoisk.ru/film/{json_response['id']}/'
+#
+#         await update.message.reply_html(f"<a href=\"{request_web}\">«{name}»</a> ({year} год, {age}+)"
+#                                         f"\nДлительность {length} мин.{all_series}"
+#                                         f"\nРейтинг фильма: {rating}\n"
+#                                         f"\n{description}",
+#                                         reply_markup=markup_swipe)
+def isfloat(value):
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+
 headers = {"X-API-KEY": "13KFM42-2QQ40P8-HP85Q09-8EV5DWQ"}
 request = f'https://api.kinopoisk.dev/v1.4/movie'
 json_response = ''
@@ -149,22 +173,25 @@ async def rate_function(update, context):
 
 
 async def found(update, context):
-    global json_response
+    global json_response, last_markup
     params = {
               'genres.name': search_filters['genre'],
               'movieLength': search_filters['film_length'],
               'countries.name': search_filters['country'],
               'year': search_filters['year'],
               'type': search_filters['type'],
-              'rating.kp': search_filters['rate']
+              'rating.kp': search_filters['rate'],
+              'limit': 250
               }
+    await update.message.reply_text(f'Ищу фильм, подождите...')
     response = requests.get(request, headers=headers, params=params)
+    print(response)
     json_response = response.json()
 
     try:
         x = randint(0, len(json_response['docs']) - 1)
 
-        name = json_response['docs'][x]['name']
+        name = json_response['docs'][x]['name'] if json_response['docs'][x]['name'] != None else json_response['docs'][x]['alternativeName']
         year = json_response['docs'][x]['year']
         age = json_response['docs'][x]['ageRating'] if json_response['docs'][x]['ageRating'] != None else 0
         length = f'фильма: {json_response['docs'][x]['movieLength']}' if json_response['docs'][x]['movieLength'] != None else f'серии: {json_response['docs'][x]['seriesLength']}'
@@ -180,8 +207,9 @@ async def found(update, context):
                                         f"\n{description}",
                                         reply_markup=markup_swipe)
         del json_response['docs'][x]
+        last_markup = markup_swipe
     except Exception:
-        await update.message.reply_text('Oops..')
+        await update.message.reply_text('Упс.. что-то пошло не так!')
 
 
 async def next(update, context):
@@ -189,12 +217,15 @@ async def next(update, context):
     try:
         x = randint(0, len(json_response['docs']) - 1)
 
-        name = json_response['docs'][x]['name']
+        name = json_response['docs'][x]['name'] if json_response['docs'][x]['name'] != None else \
+        json_response['docs'][x]['alternativeName']
         year = json_response['docs'][x]['year']
         age = json_response['docs'][x]['ageRating'] if json_response['docs'][x]['ageRating'] != None else 0
-        length = f'фильма: {json_response['docs'][x]['movieLength']}' if json_response['docs'][x]['movieLength'] != None else f'серии: {json_response['docs'][x]['seriesLength']}'
+        length = f'фильма: {json_response['docs'][x]['movieLength']}' if json_response['docs'][x][
+                                                                             'movieLength'] != None else f'серии: {json_response['docs'][x]['seriesLength']}'
         rating = json_response['docs'][x]['rating']['kp']
-        description = json_response['docs'][x]['description'] if json_response['docs'][x]['description'] != '' else json_response['docs'][x]['shortDescription']
+        description = json_response['docs'][x]['description'] if json_response['docs'][x]['description'] != '' else \
+        json_response['docs'][x]['shortDescription']
         all_series = f'\nДлительность всех серий: {json_response['docs'][x]['totalSeriesLength']}' if \
         json_response['docs'][x]['isSeries'] == True and json_response['docs'][x]['totalSeriesLength'] != None else ''
 
@@ -277,14 +308,14 @@ async def answers(update, context):
         else:
             await update.message.reply_text(f'Введите цифру!')
     elif rating_dialogue:
-        if update.message.text.isdigit():
-            if 0 < float(update.message.text) <= 10:
+        if isfloat(update.message.text):
+            if 0.0 <= float(update.message.text) <= 10.0:
                 await update.message.reply_text(f'Вы ввели рейтинг: {update.message.text}. Теперь вы можете выбрать другой фильтр или ввести команду /found')
-                search_filters['rate'] = float(update.message.text)
+                search_filters['rate'] = update.message.text
             else:
-                await update.message.reply_text(f'Вы можете вводить рейтинг от 0 до 10!')
-        elif update.message.text.split('-')[0].isdigit() and update.message.text.split('-')[1].isdigit():
-            if (0 < float(update.message.text.split('-')[0]) <= 10) and (0 < float(update.message.text.split('-')[1]) <= 10):
+                await update.message.reply_text(f'Вы можете вводить рейтинг от 2 до 10!')
+        elif isfloat(update.message.text.split('-')[0]) and isfloat(update.message.text.split('-')[1]):
+            if (0.0 <= float(update.message.text.split('-')[0]) <= 10.0) and (0.0 <= float(update.message.text.split('-')[1]) <= 10.0):
                 await update.message.reply_text(f'Вы ввели диапозон рейтинга: {update.message.text}. Теперь вы можете выбрать другой фильтр или ввести команду /found')
                 search_filters['rate'] = update.message.text
             else:
