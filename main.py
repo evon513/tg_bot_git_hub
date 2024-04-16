@@ -2,29 +2,14 @@ import json
 from random import randint
 
 import requests
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
-from telegram.ext import CommandHandler, MessageHandler, filters
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.constants import ParseMode
+from telegram.ext import CommandHandler, MessageHandler, filters, CallbackQueryHandler
 import logging
 from telegram.ext import Application
 from config import BOT_TOKEN
 
-# name = json_response['name']
-#         year = json_response['year']
-#         age = json_response['ageRating'] if json_response['ageRating'] != None else 0
-#         length = f'фильма: {json_response['movieLength']}' if json_response['movieLength'] != None else f'серии: {json_response['seriesLength']}'
-#         rating = json_response['rating']['kp']
-#         description = json_response['description'] if json_response['description'] != '' else \
-#         json_response['shortDescription']
-#         all_series = f'\nДлительность всех серий: {json_response['totalSeriesLength']}' if \
-#         json_response['isSeries'] == True and json_response['totalSeriesLength'] != None else ''
-#
-#         request_web = f'https://www.kinopoisk.ru/film/{json_response['id']}/'
-#
-#         await update.message.reply_html(f"<a href=\"{request_web}\">«{name}»</a> ({year} год, {age}+)"
-#                                         f"\nДлительность {length} мин.{all_series}"
-#                                         f"\nРейтинг фильма: {rating}\n"
-#                                         f"\n{description}",
-#                                         reply_markup=markup_swipe)
+
 def isfloat(value):
     try:
         float(value)
@@ -32,14 +17,10 @@ def isfloat(value):
     except ValueError:
         return False
 
+
 headers = {"X-API-KEY": "13KFM42-2QQ40P8-HP85Q09-8EV5DWQ"}
 request = f'https://api.kinopoisk.dev/v1.4/movie'
 json_response = ''
-# response = requests.get(request, headers=headers)
-# json_response = response.json()
-#
-# with open('kinopoisk.json', 'w', encoding='utf-8') as kp:
-#     json.dump(json_response, kp, ensure_ascii=False, indent=4)
 
 with open('kinopoisk_genres.json', encoding='utf-8') as kp:
     json_response_genres = json.load(kp)
@@ -56,71 +37,110 @@ with open('kinopoisk_countries.json', encoding='utf-8') as kp:
 #
 # logger = logging.getLogger(__name__)
 
-reply_keyboard = [['/help', '/search'],
-                  ['/start', '/close']]
+reply_keyboard = [[InlineKeyboardButton('Инструкция', callback_data="help"), InlineKeyboardButton('Приступить к поиску', callback_data="start_search")]]
+markup = InlineKeyboardMarkup(reply_keyboard)
 
 reply_keyboard_search = [
-    ['/genre', '/film_length', '/country'],
-    ['/year', '/type', '/rate'],
-    ['/delete_param', '/found'],
-    ['/help']
+    [InlineKeyboardButton('Выбрать жанр', callback_data='genre'),
+     InlineKeyboardButton('Выбрать длительность', callback_data='film_length')],
+     [InlineKeyboardButton('Выбрать страну', callback_data='country'),
+    InlineKeyboardButton('Выбрать год', callback_data='year')],
+     [InlineKeyboardButton('Выбрать тип', callback_data='type'),
+     InlineKeyboardButton('Выбрать рейтинг', callback_data='rate')],
+    [InlineKeyboardButton('Инструкция', callback_data='help'), InlineKeyboardButton('Вернуться', callback_data='return')],
+[   InlineKeyboardButton('Найти', callback_data='found')]
 ]
+markup_search = InlineKeyboardMarkup(reply_keyboard_search)
+
+reply_keyboard_delete = [
+    [InlineKeyboardButton('Удалить жанр', callback_data='1'),
+     InlineKeyboardButton('Удалить длительность', callback_data='2')],
+    [InlineKeyboardButton('Удалить страну', callback_data='3'),
+    InlineKeyboardButton('Удалить год', callback_data='4')],
+    [InlineKeyboardButton('Удалить тип', callback_data='5'),
+     InlineKeyboardButton('Удалить рейтинг', callback_data='6')],
+    [InlineKeyboardButton('Вернуться', callback_data='return')],
+    [InlineKeyboardButton('Инструкция', callback_data='help')]
+]
+markup_delete = InlineKeyboardMarkup(reply_keyboard_delete)
+
+reply_keyboard_do = [[InlineKeyboardButton('Добавить критерий', callback_data="add"), InlineKeyboardButton('Убрать критерий', callback_data="delete")],
+                  [InlineKeyboardButton('Инструкция', callback_data="help")]]
+markup_do = InlineKeyboardMarkup(reply_keyboard_do)
+
+reply_keyboard_return = [[InlineKeyboardButton('Вернуться', callback_data="return")]]
+markup_return = InlineKeyboardMarkup(reply_keyboard_return)
 
 reply_keyboard_swap = [['/next', '/back_to_menu']]
-markup_search = ReplyKeyboardMarkup(reply_keyboard_search, one_time_keyboard=False)
-markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
 markup_swipe = ReplyKeyboardMarkup(reply_keyboard_swap, one_time_keyboard=False)
 
 last_markup = markup
 
+search_filters = {'genre': None, 'film_length': None, 'country': None, 'year': None, 'type': None, 'rate': None}
+is_return = False
+last_text = 'start'
 genre_dialogue = length_dialogue = country_dialogue = year_dialogue = type_dialogue = rating_dialogue = delete_param_dialogue = False
 
-search_filters = {'genre': None, 'film_length': None, 'country': None, 'year': None, 'type': None, 'rate': None}
+message_id = 0
 
+async def button(update, context) -> None:
+    global search_filters, is_return, last_text, length_dialogue
+    query = update.callback_query
+    await query.answer()
+    message_id = query.message.message_id
+    query.delete_message()
+    print(message_id)
+    is_return = False
+    if query.data == 'return':
+        is_return = True
+    if query.data == 'help':
+        await query.edit_message_text(text="Я бот который поможет найти тебе нужный фильм!). Для открытия меню быстрых команд напишите /open\n"
+        "\nПояснение функций:\n"
+        "\n<b>Выбрать жанр</b> - выдает список жанров, их существует всего 32, ты должен указать одну из цифр списка, жанры упорядочены по алфавиту.\n"
+        "\n<b>Выбрать длительность</b> Предлагает ввести длину фильма или диапазон в минутах, если ввести 50-120, то бот будет искать фильмы, которые не короче 50 минут и не длиннее 120 минут.\n"
+        "\n<b>Выбрать страну</b> Предлагает ввести страну по которой будет искаться фильм. Если ввести несуществующую страну, то бот скажет, что такой страны в нашем списке нет.\n"
+        "\n<b>Выбрать год</b> Предлагает ввести год издания фильма или диапазон годов, если ввести 2020-2023, то бот будет искать фильмы, которые вышли не раньше 2020 года и не позже 2023 года.\n"
+        "\n<b>Выбрать тип</b> Дает на выбор 5 типов, ты должен указать один из них, написав его цифру.\n"
+        "\n<b>Выбрать рейтинг</b> Предлагает ввести рейтинг фильма или диапазон рейтинга, минимальный рейтинг: 0, максимальный: 10, если ввести 6-9, то бот будет искать фильмы с рейтинг не ниже 6 и не выше 9.\n"
+        "\n<b>Найти</b> Ищет подходящий фильм по жанру, длине, стране, году, типу, рейтингу, автору фильма, если не указывать фильтры поиска, то бот выдаст рандомный фильм. ВАЖНО: если снова нажать на команду, будет создаваться новый запрос и фильмы будут повторяться.\n"
+        "\n<b>Удалить критерий</b> Предлагает удалить 1 из фильтров либо сразу все\n"
+        "\n/next Ищет фильмы с указанными параметрами. \nЛимит фильмов: 10.\n"
+        "\n/back_to_menu Сбрасывает фильтры и возвращает пользователя обратно ко всем возможным командам.", parse_mode=ParseMode.HTML, reply_markup=markup_return)
+    elif query.data == 'start_search' or (last_text == 'start_search' and is_return):
+        if not is_return:
+            last_text = query.data
+        await query.edit_message_text(text='Выберите что вы хотите сделать:', reply_markup=markup_do)
+    elif query.data == 'add' or (last_text == 'add' and is_return):
+        if not is_return and last_text != 'start_search':
+            last_text = query.data
+        else:
+            last_text = 'start_search'
+        await query.edit_message_text(text='Выберите что вы хотите сделать:', reply_markup=markup_search)
+    elif query.data == 'delete':
+        await query.edit_message_text(text='Выберите что вы хотите удалить:', reply_markup=markup_delete)
+    elif query.data in ['1', '2', '3', '4', '5', '6']:
+        search_filters[int(query.data) - 1] = None
+        await query.edit_message_text(text='<b>Критерий удален.</b> Выберите что вы хотите удалить:', reply_markup=markup_delete)
+    elif query.data == 'start' or (last_text == 'start' and is_return):
+        user = update.effective_user
+        await query.edit_message_text(
+            f"Привет {user.mention_html()}! Я <i>Мастер по фильмам.</i> Выберите нужные вам характеристики и я найду вам нужный фильм!\n"
+            f"Для начала работы со мной выберите поле с надписью <b>Приступить к поиску</b>.\n"
+            f"Чтобы увидеть пояснение команд выберите поле с надписью <b>Инструкция</b>",
+            reply_markup=markup, parse_mode=ParseMode.HTML)
+    elif query.data == 'film_length':
+        last_text = 'add'
+        await query.edit_message_text(f'Введите длину или диапазон фильма в минутах, например: 60-120', reply_markup=markup_return)
+        length_dialogue = True
+    print(query)
 
 async def start(update, context):
     user = update.effective_user
     await update.message.reply_html(
-        f"Привет {user.mention_html()}! Я Мастер по фильмам. Выберите нужные вам характеристики и я найду вам нужный фильм!"
-        f" Для вывода команд для поиска фильма введите /search. Чтобы увидеть пояснение команд введите /help",
+        f"Привет {user.mention_html()}! Я <i>Мастер по фильмам.</i> Выберите нужные вам характеристики и я найду вам нужный фильм!\n"
+        f"Для начала работы со мной выберите поле с надписью <b>Приступить к поиску</b>.\n"
+        f"Чтобы увидеть пояснение команд выберите поле с надписью <b>Инструкция</b>",
         reply_markup=markup)
-
-
-async def help(update, context):
-    await update.message.reply_html(
-        "Я бот который поможет найти тебе нужный фильм!). Для открытия меню быстрых команд напишите /open\n"
-        "\nПояснение функций:\n"
-        "\n/genre Выдает список жанров, их существует всего 32, ты должен указать одну из цифр списка, жанры упорядочены по алфавиту.\n"
-        "\n/film_length Предлагает ввести длину фильма или диапазон в минутах, если ввести 50-120, то бот будет искать фильмы, которые не короче 50 минут и не длиннее 120 минут.\n"
-        "\n/country Предлагает ввести страну по которой будет искаться фильм. Если ввести несуществующую страну, то бот скажет, что такой страны в нашем списке нет.\n"
-        "\n/year Предлагает ввести год издания фильма или диапазон годов, если ввести 2020-2023, то бот будет искать фильмы, которые вышли не раньше 2020 года и не позже 2023 года.\n"
-        "\n/type Дает на выбор 5 типов, ты должен указать один из них, написав его цифру.\n"
-        "\n/rate Предлагает ввести рейтинг фильма или диапазон рейтинга, минимальный рейтинг: 0, максимальный: 10, если ввести 6-9, то бот будет искать фильмы с рейтинг не ниже 6 и не выше 9.\n"
-        "\n/found Ищет подходящий фильм по жанру, длине, стране, году, типу, рейтингу, автору фильма, если не указывать фильтры поиска, то бот выдаст рандомный фильм. ВАЖНО: если снова нажать на команду, будет создаваться новый запрос и фильмы будут повторяться.\n"
-        "\n/delete_param Предлагает удалить 1 из фильтров либо сразу все\n"
-        "\n/search Показывает все возможные команды для выбора фильтров фильма.\n"
-        "\n/next Ищет фильмы с указанными параметрами. \nЛимит фильмов: 10.\n"
-        "\n/back_to_menu Сбрасывает фильтры и возвращает пользователя обратно ко всем возможным командам.")
-
-
-async def close(update, context):
-    await update.message.reply_text('Ок, для открытия клавиатуры введите /open', reply_markup=ReplyKeyboardRemove())
-
-
-async def open(update, context):
-    await update.message.reply_text('Ок, для закрытия клавиатуры введите /close', reply_markup=last_markup)
-
-
-async def search(update, context):
-    global last_markup
-    text = ''
-    for j in range(len(reply_keyboard_search)):
-        for i in range(len(reply_keyboard_search[j])):
-            text += f'{reply_keyboard_search[j][i]}\n'
-    await update.message.reply_text(text)
-    await update.message.reply_text(f"Вот список доступных фильтров, "
-                                    f"перед использованием команд рукомендуется прочитать их пояснение.", reply_markup=markup_search)
-    last_markup = markup_search
 
 
 async def genre_function(update, context):
@@ -132,13 +152,6 @@ async def genre_function(update, context):
     await update.message.reply_text(text)
     await update.message.reply_text(f"Вот список жанров фильмов, напиши одну любую цифру из доступных")
     genre_dialogue = True
-
-
-async def film_length_function(update, context):
-    global genre_dialogue, length_dialogue, country_dialogue, year_dialogue, type_dialogue, rating_dialogue, delete_param_dialogue
-    genre_dialogue = length_dialogue = country_dialogue = year_dialogue = type_dialogue = rating_dialogue = delete_param_dialogue = False
-    await update.message.reply_text(f'Введите длину или диапазон фильма в минутах, например: 60-120')
-    length_dialogue = True
 
 
 async def country_function(update, context):
@@ -247,15 +260,6 @@ async def back(update, context):
     await search(update, context)
 
 
-async def delete_param_function(update, context):
-    global genre_dialogue, length_dialogue, country_dialogue, year_dialogue, type_dialogue, rating_dialogue, delete_param_dialogue
-    genre_dialogue = length_dialogue = country_dialogue = year_dialogue = type_dialogue = rating_dialogue = delete_param_dialogue = False
-    await update.message.reply_text(f'Что вы хотите сделать?'
-                                    f'\n1. Удалить все фильтры\n2. Удалить жанр\n3. Удалить длину\n4. Удалить страну'
-                                    f'\n5. Удалить год \n6. Удалить тип \n7. Удалить рейтинг')
-    delete_param_dialogue = True
-
-
 async def answers(update, context):
     global search_filters
     if genre_dialogue:
@@ -344,24 +348,20 @@ async def answers(update, context):
 def main():
     application = Application.builder().token(BOT_TOKEN).build()
     application.add_handler(CommandHandler('start', start))
-    application.add_handler(CommandHandler("help", help))
-    application.add_handler(CommandHandler('open', open))
-    application.add_handler(CommandHandler('close', close))
-    application.add_handler(CommandHandler('search', search))
 
     application.add_handler(CommandHandler('genre', genre_function))
-    application.add_handler(CommandHandler('film_length', film_length_function))
     application.add_handler(CommandHandler('country', country_function))
     application.add_handler(CommandHandler('year', year_function))
     application.add_handler(CommandHandler('type', type_function))
     application.add_handler(CommandHandler('rate', rate_function))
 
-    application.add_handler(CommandHandler('delete_param', delete_param_function))
     application.add_handler(CommandHandler('found', found))
 
     application.add_handler(CommandHandler('next', next))
     application.add_handler(CommandHandler('back_to_menu', back))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, answers))
+
+    application.add_handler(CallbackQueryHandler(button))
     application.run_polling()
 
 
