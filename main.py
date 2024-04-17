@@ -2,7 +2,8 @@ import json
 from random import randint
 
 import requests
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup, \
+    LinkPreviewOptions
 from telegram.constants import ParseMode
 from telegram.ext import CommandHandler, MessageHandler, filters, CallbackQueryHandler
 import logging
@@ -70,7 +71,7 @@ markup_do = InlineKeyboardMarkup(reply_keyboard_do)
 reply_keyboard_return = [[InlineKeyboardButton('Вернуться', callback_data="return")]]
 markup_return = InlineKeyboardMarkup(reply_keyboard_return)
 
-reply_keyboard_swap = [[InlineKeyboardButton('Следующий фильм', callback_data='next'), InlineKeyboardButton('Вернуться', callback_data='return')]]
+reply_keyboard_swap = [[InlineKeyboardButton('Следующий фильм', callback_data='next'), InlineKeyboardButton('Вернуться', callback_data='go_back')]]
 markup_swipe = InlineKeyboardMarkup(reply_keyboard_swap)
 
 
@@ -155,6 +156,7 @@ async def button(update, context, msg='') -> None:
         await query.edit_message_text(f'Введите рейтинг от 0 до 10, например: 6.7, также через "-" вы можете указать диапазон поиска: 4.5-10')
         rating_dialogue = True
     elif query.data == 'found' or query.data == 'next':
+        last_text = 'start_search'
         if not response_get:
             await query.edit_message_text(f'Ищу фильм, подождите...')
             params = {
@@ -182,14 +184,17 @@ async def button(update, context, msg='') -> None:
 
             request_web = f'https://www.kinopoisk.ru/film/{json_response['docs'][x]['id']}/'
 
-            await context.bot.send_message(chat_id=update.effective_chat.id, text=f"<a href=\"{request_web}\">«{name}»</a> ({year} год, {age}+)"
+            await context.bot.send_photo(chat_id=update.effective_chat.id, photo=json_response['docs'][x]['poster']['url'], caption=f"<a href=\"{request_web}\">«{name}»</a> ({year} год, {age}+)"
                                             f"\nДлительность {length} мин.{all_series}"
                                             f"\nРейтинг фильма: {rating}\n"
                                             f"\n{description}",
                                             reply_markup=markup_swipe, parse_mode=ParseMode.HTML)
+            # link_preview_options=LinkPreviewOptions(is_disabled=True)
             del json_response['docs'][x]
         except Exception:
             await context.bot.send_message(chat_id=update.effective_chat.id, text='Упс.. что-то пошло не так!')
+    elif query.data == 'go_back':
+        print(1)
 
 
 async def start(update, context):
@@ -199,45 +204,6 @@ async def start(update, context):
         f"Для начала работы со мной выберите поле с надписью <b>Приступить к поиску</b>.\n"
         f"Чтобы увидеть пояснение команд выберите поле с надписью <b>Инструкция</b>.",
         reply_markup=markup)
-
-
-async def found(update, context):
-    global json_response, last_markup
-    params = {
-              'genres.name': search_filters['genre'],
-              'movieLength': search_filters['film_length'],
-              'countries.name': search_filters['country'],
-              'year': search_filters['year'],
-              'type': search_filters['type'],
-              'rating.kp': search_filters['rate'],
-              'limit': 250
-              }
-    await update.message.reply_text(f'Ищу фильм, подождите...')
-    response = requests.get(request, headers=headers, params=params)
-    json_response = response.json()
-
-    try:
-        x = randint(0, len(json_response['docs']) - 1)
-
-        name = json_response['docs'][x]['name'] if json_response['docs'][x]['name'] != None else json_response['docs'][x]['alternativeName']
-        year = json_response['docs'][x]['year']
-        age = json_response['docs'][x]['ageRating'] if json_response['docs'][x]['ageRating'] != None else 0
-        length = f'фильма: {json_response['docs'][x]['movieLength']}' if json_response['docs'][x]['movieLength'] != None else f'серии: {json_response['docs'][x]['seriesLength']}'
-        rating = json_response['docs'][x]['rating']['kp']
-        description = json_response['docs'][x]['description'] if json_response['docs'][x]['description'] != '' else json_response['docs'][x]['shortDescription']
-        all_series = f'\nДлительность всех серий: {json_response['docs'][x]['totalSeriesLength']}' if json_response['docs'][x]['isSeries'] == True and json_response['docs'][x]['totalSeriesLength'] != None else ''
-
-        request_web = f'https://www.kinopoisk.ru/film/{json_response['docs'][x]['id']}/'
-
-        await update.message.reply_html(f"<a href=\"{request_web}\">«{name}»</a> ({year} год, {age}+)"
-                                        f"\nДлительность {length} мин.{all_series}"
-                                        f"\nРейтинг фильма: {rating}\n"
-                                        f"\n{description}",
-                                        reply_markup=markup_swipe)
-        del json_response['docs'][x]
-        last_markup = markup_swipe
-    except Exception:
-        await update.message.reply_text('Упс.. что-то пошло не так!')
 
 
 async def answers(update, context):
@@ -250,17 +216,17 @@ async def answers(update, context):
             await update.message.reply_text(f'Введите существующий номер!')
     elif length_dialogue:
         if update.message.text.isdigit():
-            await update.message.reply_html(f'Вы ввели длительность: <b>{update.message.text} мин</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.')
+            await update.message.reply_html(f'Вы ввели длительность: <b>{update.message.text} мин</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.', reply_markup=markup_search)
             search_filters['film_length'] = update.message.text
         elif update.message.text.split('-')[0].isdigit() and update.message.text.split('-')[1].isdigit():
-            await update.message.reply_html(f'Вы ввели диапазон длительности длительности: <b>{update.message.text} мин</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.')
+            await update.message.reply_html(f'Вы ввели диапазон длительности длительности: <b>{update.message.text} мин</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.', reply_markup=markup_search)
             search_filters['film_length'] = update.message.text
         else:
             await update.message.reply_text(f'Введите число или диапазон чисел!')
     elif country_dialogue:
         for x in json_response_countries:
             if update.message.text.lower() == x['name'].lower():
-                await update.message.reply_html(f'Вы выбрали страну: <b>{x['name']}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.')
+                await update.message.reply_html(f'Вы выбрали страну: <b>{x['name']}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.', reply_markup=markup_search)
                 search_filters['country'] = x['name']
                 return
         await update.message.reply_text(f'Похоже такой страны в нашем списке нет!')
@@ -271,11 +237,11 @@ async def answers(update, context):
             elif int(update.message.text) < 1874:
                 await update.message.reply_text(f'Фильмы начинаются с 1874 года!')
             else:
-                await update.message.reply_html(f'Вы выбрали <b>{update.message.text} год</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.')
+                await update.message.reply_html(f'Вы выбрали <b>{update.message.text} год</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.', reply_markup=markup_search)
                 search_filters['year'] = update.message.text
         elif update.message.text.split('-')[0].isdigit() and update.message.text.split('-')[1].isdigit():
             if (2025 > int(update.message.text.split('-')[0]) > 1874) and (2025 > int(update.message.text.split('-')[1]) > 1874):
-                await update.message.reply_html(f'Вы выбрали диапазон <b>{update.message.text} год</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.')
+                await update.message.reply_html(f'Вы выбрали диапазон <b>{update.message.text} год</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.', reply_markup=markup_search)
                 search_filters['year'] = update.message.text
             else:
                 await update.message.reply_text(f'Числа не могут быть меньше 1874 и больше нынешнего года!')
@@ -284,7 +250,7 @@ async def answers(update, context):
     elif type_dialogue:
         if update.message.text.isdigit():
             if 6 > int(update.message.text) > 0:
-                await update.message.reply_html(f'Вы выбрали тип номер {update.message.text}: <b>{json_response_types[int(update.message.text) - 1]['name']}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.')
+                await update.message.reply_html(f'Вы выбрали тип номер {update.message.text}: <b>{json_response_types[int(update.message.text) - 1]['name']}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.', reply_markup=markup_search)
                 search_filters['type'] = json_response_types[int(update.message.text) - 1]['name']
             else:
                 await update.message.reply_text(f'Введите цифру из списка!')
@@ -293,13 +259,13 @@ async def answers(update, context):
     elif rating_dialogue:
         if isfloat(update.message.text):
             if 0.0 <= float(update.message.text) <= 10.0:
-                await update.message.reply_html(f'Вы ввели рейтинг: <b>{update.message.text}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.')
+                await update.message.reply_html(f'Вы ввели рейтинг: <b>{update.message.text}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.', reply_markup=markup_search)
                 search_filters['rate'] = update.message.text
             else:
                 await update.message.reply_text(f'Вы можете вводить рейтинг от 2 до 10!')
         elif isfloat(update.message.text.split('-')[0]) and isfloat(update.message.text.split('-')[1]):
             if (0.0 <= float(update.message.text.split('-')[0]) <= 10.0) and (0.0 <= float(update.message.text.split('-')[1]) <= 10.0):
-                await update.message.reply_html(f'Вы ввели диапозон рейтинга: <b>{update.message.text}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.')
+                await update.message.reply_html(f'Вы ввели диапозон рейтинга: <b>{update.message.text}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.', reply_markup=markup_search)
                 search_filters['rate'] = update.message.text
             else:
                 await update.message.reply_text(f'Вы можете вводить диапазон рейтинга от 0 до 10!')
@@ -312,10 +278,7 @@ async def answers(update, context):
 def main():
     application = Application.builder().token(BOT_TOKEN).build()
     application.add_handler(CommandHandler('start', start))
-    application.add_handler(CommandHandler('found', found))
-
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, answers))
-
     application.add_handler(CallbackQueryHandler(button))
     application.run_polling()
 
