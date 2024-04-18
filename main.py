@@ -194,7 +194,8 @@ async def button(update, context, msg='') -> None:
         except Exception:
             await context.bot.send_message(chat_id=update.effective_chat.id, text='Упс.. что-то пошло не так!')
     elif query.data == 'go_back':
-        print(1)
+        await context.bot.edit_message_text(chat_id=update.effective_chat.id, message_id='asdasd')
+        await context.bot.send_message(chat_id=update.effective_chat.id, text='Выберите что вы хотите сделать:', reply_markup=markup_do)
 
 
 async def start(update, context):
