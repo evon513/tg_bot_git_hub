@@ -22,6 +22,11 @@ def isfloat(value):
 headers = {"X-API-KEY": "13KFM42-2QQ40P8-HP85Q09-8EV5DWQ"}
 request = f'https://api.kinopoisk.dev/v1.4/movie'
 json_response = ''
+# response = requests.get(request, headers=headers)
+# json_response = response.json()
+# with open('kinopoisk.json', 'w', encoding='utf-8') as kp:
+#     json.dump(json_response, kp, indent=4, ensure_ascii=False)
+
 
 with open('kinopoisk_genres.json', encoding='utf-8') as kp:
     json_response_genres = json.load(kp)
@@ -161,6 +166,7 @@ async def button(update, context, msg='') -> None:
         last_text = 'start_search'
         if not response_get:
             await query.edit_message_text(f'Ищу фильм, подождите...')
+            print(search_filters)
             params = {
                 'genres.name': search_filters['genre'],
                 'movieLength': search_filters['film_length'],
@@ -175,17 +181,30 @@ async def button(update, context, msg='') -> None:
             response_get = True
         # try:
         x = randint(0, len(json_response['docs']) - 1)
-
+        print(f'{json_response['docs'][x]['id']}')
+        photo = json_response['docs'][x]['poster']['url'] if json_response['docs'][x]['poster']['url'] != None else open('kinopoisk.jpg', 'rb')
         name = json_response['docs'][x]['name'] if json_response['docs'][x]['name'] != None else json_response['docs'][x]['alternativeName']
         year = json_response['docs'][x]['year']
         age = json_response['docs'][x]['ageRating'] if json_response['docs'][x]['ageRating'] != None else 0
-        length = f'фильма: {json_response['docs'][x]['movieLength']}' if json_response['docs'][x]['movieLength'] != None else f'серии: {json_response['docs'][x]['seriesLength']}'
-        rating = json_response['docs'][x]['rating']['kp']
-        description = json_response['docs'][x]['description'] if json_response['docs'][x]['description'] != '' else json_response['docs'][x]['shortDescription']
-        all_series = f'\nДлительность всех серий: {json_response['docs'][x]['totalSeriesLength']}' if json_response['docs'][x]['isSeries'] == True and json_response['docs'][x]['totalSeriesLength'] != None else ''
 
+        if json_response['docs'][x]['movieLength'] != None:
+            length = f'фильма: {json_response['docs'][x]['movieLength']}'
+        elif json_response['docs'][x]['seriesLength'] != None:
+            length = f'серии: {json_response['docs'][x]['seriesLength']}'
+        else:
+            length = 0
+
+        rating = json_response['docs'][x]['rating']['kp']
+        if json_response['docs'][x]['description'] != None:
+            description = json_response['docs'][x]['description']
+        elif json_response['docs'][x]['shortDescription'] != None:
+            description = json_response['docs'][x]['shortDescription']
+        else:
+            description = f'Очень интересный фильм)'
+
+        all_series = f'\nДлительность всех серий: {json_response['docs'][x]['totalSeriesLength']}' if json_response['docs'][x]['isSeries'] == True and json_response['docs'][x]['totalSeriesLength'] != None else ''
         request_web = f'https://www.kinopoisk.ru/film/{json_response['docs'][x]['id']}/'
-        await context.bot.send_photo(chat_id=update.effective_chat.id, photo=json_response['docs'][x]['poster']['url'], caption=f"<a href=\"{request_web}\">«{name}»</a> ({year} год, {age}+)"
+        await context.bot.send_photo(chat_id=update.effective_chat.id, photo=photo, caption=f"<a href=\"{request_web}\">«{name}»</a> ({year} год, {age}+)"
                                         f"\nДлительность {length} мин.{all_series}"
                                         f"\nРейтинг фильма: {rating}\n"
                                         f"\n{description}",
@@ -198,6 +217,7 @@ async def button(update, context, msg='') -> None:
         # except Exception:
         #     await context.bot.send_message(chat_id=update.effective_chat.id, text='Упс.. что-то пошло не так!')
     elif query.data == 'go_back':
+        response_get = False
         await context.bot.edit_message_reply_markup(reply_markup=None, chat_id=update.effective_chat.id, message_id=int(message_id))
         await context.bot.send_message(chat_id=update.effective_chat.id, text='Выберите что вы хотите сделать:', reply_markup=markup_do)
 
