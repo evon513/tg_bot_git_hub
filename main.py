@@ -47,29 +47,30 @@ reply_keyboard = [[InlineKeyboardButton('Инструкция', callback_data="h
 markup = InlineKeyboardMarkup(reply_keyboard)
 
 reply_keyboard_search = [
-    [InlineKeyboardButton('Выбрать жанр', callback_data='genre'),
-     InlineKeyboardButton('Выбрать длительность', callback_data='film_length')],
-     [InlineKeyboardButton('Выбрать страну', callback_data='country'),
-    InlineKeyboardButton('Выбрать год', callback_data='year')],
-     [InlineKeyboardButton('Выбрать тип', callback_data='type'),
-     InlineKeyboardButton('Выбрать рейтинг', callback_data='rate')],
+    [InlineKeyboardButton('Выбрать жанр', callback_data='genre_add'),
+     InlineKeyboardButton('Выбрать длительность', callback_data='film_length_add')],
+     [InlineKeyboardButton('Выбрать страну', callback_data='country_add'),
+    InlineKeyboardButton('Выбрать год', callback_data='year_add')],
+     [InlineKeyboardButton('Выбрать тип', callback_data='type_add'),
+     InlineKeyboardButton('Выбрать рейтинг', callback_data='rate_add')],
     [InlineKeyboardButton('Вернуться', callback_data='return')]
 ]
 markup_search = InlineKeyboardMarkup(reply_keyboard_search)
 
 reply_keyboard_delete = [
-    [InlineKeyboardButton('Удалить жанр', callback_data='1'),
-     InlineKeyboardButton('Удалить длительность', callback_data='2')],
-    [InlineKeyboardButton('Удалить страну', callback_data='3'),
-    InlineKeyboardButton('Удалить год', callback_data='4')],
-    [InlineKeyboardButton('Удалить тип', callback_data='5'),
-     InlineKeyboardButton('Удалить рейтинг', callback_data='6')],
+    [InlineKeyboardButton('Удалить жанр', callback_data='genre'),
+     InlineKeyboardButton('Удалить длительность', callback_data='film_length')],
+    [InlineKeyboardButton('Удалить страну', callback_data='country'),
+    InlineKeyboardButton('Удалить год', callback_data='year')],
+    [InlineKeyboardButton('Удалить тип', callback_data='type'),
+     InlineKeyboardButton('Удалить рейтинг', callback_data='rate')],
     [InlineKeyboardButton('Вернуться', callback_data='return')]
 ]
 markup_delete = InlineKeyboardMarkup(reply_keyboard_delete)
 
 reply_keyboard_do = [[InlineKeyboardButton('Добавить критерий', callback_data="add"), InlineKeyboardButton('Убрать критерий', callback_data="delete")],
-                  [InlineKeyboardButton('Инструкция', callback_data="help")],
+                     [InlineKeyboardButton('Мои критерии', callback_data="my_params")],
+                     [InlineKeyboardButton('Инструкция', callback_data="help")],
                      [InlineKeyboardButton('Найти', callback_data='found')]]
 markup_do = InlineKeyboardMarkup(reply_keyboard_do)
 
@@ -81,7 +82,7 @@ markup_swipe = InlineKeyboardMarkup(reply_keyboard_swap)
 
 
 search_filters = {'genre': None, 'film_length': None, 'country': None, 'year': None, 'type': None, 'rate': None}
-ru = ['жанр', "длительность", "страна", "год", "тип", "рейтинг"]
+ru = ['Жанр', "Длительность", "Страна", "Год", "Тип", "Рейтинг"]
 is_return = False
 last_text = 'start'
 genre_dialogue = length_dialogue = country_dialogue = year_dialogue = type_dialogue = rating_dialogue = False
@@ -97,6 +98,7 @@ async def button(update, context, msg='') -> None:
     query = update.callback_query
     message_id = query.message.id
     await query.answer()
+    print(query.data)
 
     if query.data == 'return':
         is_return = True
@@ -129,36 +131,43 @@ async def button(update, context, msg='') -> None:
         await query.edit_message_text(text='Выберите что вы хотите сделать:', reply_markup=markup_search)
     elif query.data == 'delete':
         await query.edit_message_text(text='Выберите что вы хотите удалить:', reply_markup=markup_delete)
-    elif query.data in ['1', '2', '3', '4', '5', '6']:
-        search_filters[int(query.data) - 1] = None
-        await query.edit_message_text(text=f'<b>Критерий {ru[int(query.data) - 1]} удален.</b> Выберите что вы хотите удалить:', reply_markup=markup_delete, parse_mode=ParseMode.HTML)
-    elif query.data == 'genre' or genre_dialogue:
+    elif query.data in ['genre', 'film_length', 'country', 'year', 'type', 'rate']:
+        last_text = 'start_search'
+        search_filters[query.data] = None
+        i = 0
+        x = 0
+        for key, value in search_filters.items():
+            if query.data == key:
+                x = i
+            i += 1
+        await query.edit_message_text(text=f'<b>Критерий {ru[x]} удален.</b> Выберите что вы хотите удалить:', reply_markup=markup_delete, parse_mode=ParseMode.HTML)
+    elif query.data == 'genre_add' or genre_dialogue:
         last_text = 'start_search'
         text = ''
         for i in range(len(json_response_genres)):
             text += f'{i + 1}. {json_response_genres[i]['name']}\n'
         await query.edit_message_text(f'{text}\nВот список жанров фильмов, напиши одну любую цифру из доступных')
         genre_dialogue = True
-    elif query.data == 'film_length':
+    elif query.data == 'film_length_add':
         last_text = 'start_search'
         await query.edit_message_text(f'Введите длину или диапазон фильма в минутах, например: 60-120')
         length_dialogue = True
-    elif query.data == 'country':
+    elif query.data == 'country_add':
         last_text = 'start_search'
         await query.edit_message_text(f'Введите название страны по которой будет осуществляться поиск')
         country_dialogue = True
-    elif query.data == 'year':
+    elif query.data == 'year_add':
         last_text = 'start_search'
         await query.edit_message_text(f'Введите любой год в пределах разумного(1874-2024), также через "-" вы можете указать диапазон поиска: 2020-2023')
         year_dialogue = True
-    elif query.data == 'type':
+    elif query.data == 'type_add':
         last_text = 'start_search'
         text = ''
         for i, x in enumerate(json_response_types):
             text += f'{i + 1}. {x['name']}\n'
         await query.edit_message_text(f'{text}Вот доступные типы фильмов, укажите цифру одного из них')
         type_dialogue = True
-    elif query.data == 'rate':
+    elif query.data == 'rate_add':
         last_text = 'start_search'
         await query.edit_message_text(f'Введите рейтинг от 0 до 10, например: 6.7, также через "-" вы можете указать диапазон поиска: 4.5-10')
         rating_dialogue = True
@@ -199,7 +208,7 @@ async def button(update, context, msg='') -> None:
                 elif json_response['docs'][x]['shortDescription'] != None:
                     description = json_response['docs'][x]['shortDescription']
                 else:
-                    description = f'Очень интересный фильм)'
+                    description = f'Без описания'
 
                 all_series = f'\nДлительность всех серий: {json_response['docs'][x]['totalSeriesLength']}' if json_response['docs'][x]['isSeries'] == True and json_response['docs'][x]['totalSeriesLength'] != None else ''
                 request_web = f'https://www.kinopoisk.ru/film/{json_response['docs'][x]['id']}/'
@@ -217,6 +226,24 @@ async def button(update, context, msg='') -> None:
                 await context.bot.send_message(chat_id=update.effective_chat.id, text='Упс.. что-то пошло не так!')
         else:
             await context.bot.send_message(chat_id=update.effective_chat.id, text=f'Фильмов с такими параметрами не существует, попробуйте поменять параметры.', reply_markup=markup_return)
+            response_get = False
+    elif query.data == 'my_params':
+        text = {}
+        txt = ''
+        i = 0
+        print(search_filters)
+        for key, value in search_filters.items():
+            if value == None:
+                text[ru[i]] = 'Параметр не указан'
+            else:
+                text[ru[i]] = value
+            i += 1
+        for key, value in text.items():
+            txt += f'<b>{key}</b>: {value}\n'
+        try:
+            await query.edit_message_text(f'{txt}', parse_mode=ParseMode.HTML, reply_markup=markup_do)
+        except Exception:
+            pass
     elif query.data == 'go_back':
         response_get = False
         await context.bot.edit_message_reply_markup(reply_markup=None, chat_id=update.effective_chat.id, message_id=int(message_id))
@@ -236,23 +263,23 @@ async def answers(update, context):
     global search_filters
     if genre_dialogue:
         if update.message.text.isdigit() and (33 > int(update.message.text) > 0):
-            await update.message.reply_html(f'Вы выбрали жанр номер {update.message.text}: <b>{json_response_genres[int(update.message.text) - 1]['name']}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.', reply_markup=markup_search)
+            await update.message.reply_html(f'Вы выбрали жанр номер {update.message.text}: <b>{json_response_genres[int(update.message.text) - 1]['name']}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.', reply_markup=markup_search)
             search_filters['genre'] = json_response_genres[int(update.message.text) - 1]['name']
         else:
             await update.message.reply_text(f'Введите существующий номер!')
     elif length_dialogue:
         if update.message.text.isdigit():
-            await update.message.reply_html(f'Вы ввели длительность: <b>{update.message.text} мин</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.', reply_markup=markup_search)
+            await update.message.reply_html(f'Вы ввели длительность: <b>{update.message.text} мин</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.', reply_markup=markup_search)
             search_filters['film_length'] = update.message.text
         elif update.message.text.split('-')[0].isdigit() and update.message.text.split('-')[1].isdigit():
-            await update.message.reply_html(f'Вы ввели диапазон длительности длительности: <b>{update.message.text} мин</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.', reply_markup=markup_search)
+            await update.message.reply_html(f'Вы ввели диапазон длительности длительности: <b>{update.message.text} мин</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.', reply_markup=markup_search)
             search_filters['film_length'] = update.message.text
         else:
             await update.message.reply_text(f'Введите число или диапазон чисел!')
     elif country_dialogue:
         for x in json_response_countries:
             if update.message.text.lower() == x['name'].lower():
-                await update.message.reply_html(f'Вы выбрали страну: <b>{x['name']}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.', reply_markup=markup_search)
+                await update.message.reply_html(f'Вы выбрали страну: <b>{x['name']}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.', reply_markup=markup_search)
                 search_filters['country'] = x['name']
                 return
         await update.message.reply_text(f'Похоже такой страны в нашем списке нет!')
@@ -263,11 +290,11 @@ async def answers(update, context):
             elif int(update.message.text) < 1874:
                 await update.message.reply_text(f'Фильмы начинаются с 1874 года!')
             else:
-                await update.message.reply_html(f'Вы выбрали <b>{update.message.text} год</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.', reply_markup=markup_search)
+                await update.message.reply_html(f'Вы выбрали <b>{update.message.text} год</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.', reply_markup=markup_search)
                 search_filters['year'] = update.message.text
         elif update.message.text.split('-')[0].isdigit() and update.message.text.split('-')[1].isdigit():
             if (2025 > int(update.message.text.split('-')[0]) > 1874) and (2025 > int(update.message.text.split('-')[1]) > 1874):
-                await update.message.reply_html(f'Вы выбрали диапазон <b>{update.message.text} год</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.', reply_markup=markup_search)
+                await update.message.reply_html(f'Вы выбрали диапазон <b>{update.message.text} год</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.', reply_markup=markup_search)
                 search_filters['year'] = update.message.text
             else:
                 await update.message.reply_text(f'Числа не могут быть меньше 1874 и больше нынешнего года!')
@@ -276,7 +303,7 @@ async def answers(update, context):
     elif type_dialogue:
         if update.message.text.isdigit():
             if 6 > int(update.message.text) > 0:
-                await update.message.reply_html(f'Вы выбрали тип номер {update.message.text}: <b>{json_response_types[int(update.message.text) - 1]['name']}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.', reply_markup=markup_search)
+                await update.message.reply_html(f'Вы выбрали тип номер {update.message.text}: <b>{json_response_types[int(update.message.text) - 1]['name']}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.', reply_markup=markup_search)
                 search_filters['type'] = json_response_types[int(update.message.text) - 1]['name']
             else:
                 await update.message.reply_text(f'Введите цифру из списка!')
@@ -285,20 +312,20 @@ async def answers(update, context):
     elif rating_dialogue:
         if isfloat(update.message.text):
             if 0.0 <= float(update.message.text) <= 10.0:
-                await update.message.reply_html(f'Вы ввели рейтинг: <b>{update.message.text}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.', reply_markup=markup_search)
+                await update.message.reply_html(f'Вы ввели рейтинг: <b>{update.message.text}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.', reply_markup=markup_search)
                 search_filters['rate'] = update.message.text
             else:
                 await update.message.reply_text(f'Вы можете вводить рейтинг от 2 до 10!')
         elif isfloat(update.message.text.split('-')[0]) and isfloat(update.message.text.split('-')[1]):
             if (0.0 <= float(update.message.text.split('-')[0]) <= 10.0) and (0.0 <= float(update.message.text.split('-')[1]) <= 10.0):
-                await update.message.reply_html(f'Вы ввели диапозон рейтинга: <b>{update.message.text}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Найти</b>.', reply_markup=markup_search)
+                await update.message.reply_html(f'Вы ввели диапозон рейтинга: <b>{update.message.text}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.', reply_markup=markup_search)
                 search_filters['rate'] = update.message.text
             else:
                 await update.message.reply_text(f'Вы можете вводить диапазон рейтинга от 0 до 10!')
         else:
             await update.message.reply_text(f'Введите цифру!')
     else:
-        await update.message.reply_html(f'Для начала диалога с ботом введите /start, <b>слушайте что говорит бот!!!</b>')
+        await update.message.reply_html(f'Для начала диалога с ботом введите /start. <b>Слушайте что говорит бот.</b>')
 
 
 def main():
