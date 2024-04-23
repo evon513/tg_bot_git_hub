@@ -98,7 +98,6 @@ async def button(update, context, msg='') -> None:
     query = update.callback_query
     message_id = query.message.id
     await query.answer()
-    print(query.data)
 
     if query.data == 'return':
         is_return = True
@@ -112,7 +111,9 @@ async def button(update, context, msg='') -> None:
         "\n<b>Выбрать тип</b> - дает на выбор 5 типов, ты должен указать один из них, написав его цифру.\n"
         "\n<b>Выбрать рейтинг</b> - предлагает ввести рейтинг фильма или диапазон рейтинга, минимальный рейтинг: 0, максимальный: 10, если ввести 6-9, то бот будет искать фильмы с рейтинг не ниже 6 и не выше 9.\n"
         "\n<b>Найти</b> - ищет подходящий фильм по жанру, длине, стране, году, типу, рейтингу, автору фильма, если не указывать фильтры поиска, то бот выдаст рандомный фильм.\n"
-        "\n<b>Удалить критерий</b> - предлагает удалить 1 из фильтров либо сразу все.\n"
+        "\n<b>Добавить критерий</b> - предлагает добавить 1 из фильтров: Жанр, длительность, страна, тип, год, рейтинг.\n"
+        "\n<b>Удалить критерий</b> - предлагает удалить 1 из фильтров.\n"
+        "\n<b>Мои критерии</b> - показывает установленные критерии.\n"                                 
         "\n<b>Следующий фильм</b> - выводит следующий фильм с такими же параметрами. \n<b>Лимит фильмов: 250.</b>\n"
         "\n<b>Вернуться</b> - возвращает пользователя на шаг назад.", parse_mode=ParseMode.HTML, reply_markup=markup_return)
     elif query.data == 'start' or (last_text == 'start' and is_return):
@@ -188,50 +189,49 @@ async def button(update, context, msg='') -> None:
             json_response = response.json()
             response_get = True
         if len(json_response['docs']) != 0:
-            try:
-                x = randint(0, len(json_response['docs']) - 1)
-                photo = json_response['docs'][x]['poster']['url'] if json_response['docs'][x]['poster']['url'] != None else open('kinopoisk.jpg', 'rb')
-                name = json_response['docs'][x]['name'] if json_response['docs'][x]['name'] != None else json_response['docs'][x]['alternativeName']
-                year = json_response['docs'][x]['year']
-                age = json_response['docs'][x]['ageRating'] if json_response['docs'][x]['ageRating'] != None else 0
+            x = randint(0, len(json_response['docs']) - 1)
+            photo = json_response['docs'][x]['poster']['url'] if json_response['docs'][x]['poster']['url'] != None else open('kinopoisk.jpg', 'rb')
+            name = json_response['docs'][x]['name'] if json_response['docs'][x]['name'] != None else json_response['docs'][x]['alternativeName']
+            year = json_response['docs'][x]['year']
+            age = json_response['docs'][x]['ageRating'] if json_response['docs'][x]['ageRating'] != None else 0
 
-                if json_response['docs'][x]['movieLength'] != None:
-                    length = f'фильма: {json_response['docs'][x]['movieLength']}'
-                elif json_response['docs'][x]['seriesLength'] != None:
-                    length = f'серии: {json_response['docs'][x]['seriesLength']}'
-                else:
-                    length = 0
+            if json_response['docs'][x]['movieLength'] != None:
+                length = f'фильма: {json_response['docs'][x]['movieLength']}'
+            elif json_response['docs'][x]['seriesLength'] != None:
+                length = f'серии: {json_response['docs'][x]['seriesLength']}'
+            else:
+                length = 0
 
-                rating = json_response['docs'][x]['rating']['kp']
-                if json_response['docs'][x]['description'] != None:
-                    description = json_response['docs'][x]['description']
-                elif json_response['docs'][x]['shortDescription'] != None:
-                    description = json_response['docs'][x]['shortDescription']
-                else:
-                    description = f'Без описания'
-
-                all_series = f'\nДлительность всех серий: {json_response['docs'][x]['totalSeriesLength']}' if json_response['docs'][x]['isSeries'] == True and json_response['docs'][x]['totalSeriesLength'] != None else ''
-                request_web = f'https://www.kinopoisk.ru/film/{json_response['docs'][x]['id']}/'
-                await context.bot.send_photo(chat_id=update.effective_chat.id, photo=photo, caption=f"<a href=\"{request_web}\">«{name}»</a> ({year} год, {age}+)"
-                                                                                                    f"\nДлительность {length} мин.{all_series}"
-                                                                                                    f"\nРейтинг фильма: {rating}\n"
-                                                                                                    f"\n{description}",
-                                             reply_markup=markup_swipe, parse_mode=ParseMode.HTML)
-                # link_preview_options=LinkPreviewOptions(is_disabled=True)
-                if count > 0:
-                    await context.bot.edit_message_reply_markup(reply_markup=None, chat_id=update.effective_chat.id, message_id=int(message_id))
-                del json_response['docs'][x]
-                count += 1
-            except Exception:
-                await context.bot.send_message(chat_id=update.effective_chat.id, text='Упс.. что-то пошло не так!')
+            rating = json_response['docs'][x]['rating']['kp']
+            if json_response['docs'][x]['description'] != None and len(json_response['docs'][x]['description']) < 700:
+                description = json_response['docs'][x]['description']
+            elif json_response['docs'][x]['shortDescription'] != None:
+                description = json_response['docs'][x]['shortDescription']
+            elif json_response['docs'][x]['description'] != None:
+                description = f'Слишком длинное описание'
+            else:
+                description = f'Без описания'
+            request_web = f'https://www.kinopoisk.ru/film/{json_response['docs'][x]['id']}/'
+            await context.bot.send_photo(chat_id=update.effective_chat.id, photo=photo, caption=f"<a href=\"{request_web}\">«{name}»</a> ({year} год, {age}+)"
+                                                                                                f"\nДлительность {length} мин."
+                                                                                                f"\nРейтинг фильма: {rating}\n"
+                                                                                                f"\n{description}",
+                                         reply_markup=markup_swipe, parse_mode=ParseMode.HTML)
+            # link_preview_options=LinkPreviewOptions(is_disabled=True)
+            if count > 0:
+                await context.bot.edit_message_reply_markup(reply_markup=None, chat_id=update.effective_chat.id, message_id=int(message_id))
+            del json_response['docs'][x]
+            count += 1
         else:
-            await context.bot.send_message(chat_id=update.effective_chat.id, text=f'Фильмов с такими параметрами не существует, попробуйте поменять параметры.', reply_markup=markup_return)
+            if count > 0:
+                await context.bot.edit_message_reply_markup(reply_markup=None, chat_id=update.effective_chat.id,
+                                                            message_id=int(message_id))
+            await context.bot.send_message(chat_id=update.effective_chat.id, text=f'Фильмов с такими параметрами не осталось, попробуйте поменять параметры.', reply_markup=markup_return)
             response_get = False
     elif query.data == 'my_params':
         text = {}
         txt = ''
         i = 0
-        print(search_filters)
         for key, value in search_filters.items():
             if value == None:
                 text[ru[i]] = 'Параметр не указан'

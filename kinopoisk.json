@@ -1,200 +1,276 @@
 {
-    "lists": [],
-    "id": 339481,
+    "id": 893713,
+    "type": "anime",
     "externalId": {
         "kpHD": null
     },
-    "name": null,
-    "alternativeName": "Lifetime Presents: Disney's American Teacher Awards",
-    "enName": null,
-    "names": [
-        {
-            "name": "Lifetime Presents: Disney's American Teacher Awards",
-            "language": null,
-            "type": "Original title on kinopoisk"
-        }
-    ],
-    "type": "movie",
-    "typeNumber": 1,
-    "year": 2000,
-    "description": null,
-    "shortDescription": null,
-    "slogan": null,
-    "status": null,
+    "name": "Небесные стрелки",
     "rating": {
-        "kp": 0,
-        "imdb": 6.2,
+        "kp": 5.711,
+        "imdb": 5.7,
         "filmCritics": 0,
         "russianFilmCritics": 0,
-        "await": 0
+        "await": null
     },
+    "description": "В 2115 году Японии, которую мы знаем, больше не существует. Её место заняли две параллельные вселенные, разнящиеся друг с другом. Если в одной из них царит анархия, и наёмники всех сортов вольны делать всё что пожелают, то во второй установился тоталитарный режим, бдительно контролирующий жизнь каждого человека и никому не дающий свободы. Два этих общества так и существовали бы, не начни миры вдруг сливаться, что создало множество проблем для обоих правительств, которые решили найти радикальный выход из сложившейся ситуации.\n\nЧтобы обеспечить выживание своего политического режима и устранить угрожающий ему жизненный уклад параллельной вселенной. Набрав группу стрелков родом из обоих миров, они направили своих бойцов в прошлое на сто лет – в единую Японию 2015 года. Там, ещё до возникновения параллельных вселенных, бойцы должны сразиться друг другом, чтобы определить победителя, а также помешать возникновению мира врагов.",
     "votes": {
-        "kp": 11,
-        "imdb": 9,
+        "kp": 226,
+        "imdb": 91,
         "filmCritics": 0,
         "russianFilmCritics": 0,
         "await": 0
     },
-    "movieLength": null,
-    "totalSeriesLength": null,
-    "seriesLength": null,
-    "ratingMpaa": null,
-    "ageRating": null,
+    "distributors": {
+        "distributor": null,
+        "distributorRelease": null
+    },
+    "premiere": {
+        "world": "2015-04-04T00:00:00.000Z"
+    },
+    "slogan": null,
+    "year": 2015,
     "poster": {
-        "url": null,
-        "previewUrl": null
+        "url": "https://image.openmoviedb.com/kinopoisk-images/1900788/3b8e872d-eabd-48ce-befd-988254d95fa7/orig",
+        "previewUrl": "https://image.openmoviedb.com/kinopoisk-images/1900788/3b8e872d-eabd-48ce-befd-988254d95fa7/x1000"
     },
-    "backdrop": {
-        "url": null,
-        "previewUrl": null
-    },
+    "facts": null,
     "genres": [
         {
-            "name": "церемония"
+            "name": "аниме"
+        },
+        {
+            "name": "мультфильм"
+        },
+        {
+            "name": "фантастика"
+        },
+        {
+            "name": "боевик"
         }
     ],
     "countries": [
         {
-            "name": "США"
+            "name": "Япония"
         }
     ],
+    "seasonsInfo": [
+        {
+            "number": 1,
+            "episodesCount": 12
+        }
+    ],
+    "persons": [
+        {
+            "id": 1350409,
+            "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1350409.jpg",
+            "name": "Ацуси Абэ",
+            "enName": "Atsushi Abe",
+            "description": "Tohru Kazasumi",
+            "profession": "актеры",
+            "enProfession": "actor"
+        },
+        {
+            "id": 1046636,
+            "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1046636.jpg",
+            "name": "Дзюнъити Сувабэ",
+            "enName": "Jyunichi Suwabe",
+            "description": "Ricardo Martini",
+            "profession": "актеры",
+            "enProfession": "actor"
+        },
+        {
+            "id": 1130254,
+            "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1130254.jpg",
+            "name": "Хидэаки Тэдзука",
+            "enName": "Hideaki Tezuka",
+            "description": "Brian Odhner",
+            "profession": "актеры",
+            "enProfession": "actor"
+        },
+        {
+            "id": 2389201,
+            "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_2389201.jpg",
+            "name": "Хисако Канэмото",
+            "enName": "Hisako Kanemoto",
+            "description": "Kyoka Katagiri",
+            "profession": "актеры",
+            "enProfession": "actor"
+        },
+        {
+            "id": 4204103,
+            "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_4204103.jpg",
+            "name": "Масакадзу Нисида",
+            "enName": "Masakazu Nishida",
+            "description": "Kyoma Katagiri",
+            "profession": "актеры",
+            "enProfession": "actor"
+        },
+        {
+            "id": 1047242,
+            "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1047242.jpg",
+            "name": "Кана Уэда",
+            "enName": "Kana Ueda",
+            "description": "Shizune Rindo",
+            "profession": "актеры",
+            "enProfession": "actor"
+        },
+        {
+            "id": 1195430,
+            "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1195430.jpg",
+            "name": "Миюки Савасиро",
+            "enName": "Miyuki Sawashiro",
+            "description": "Remy Odhner",
+            "profession": "актеры",
+            "enProfession": "actor"
+        },
+        {
+            "id": 1079429,
+            "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1079429.jpg",
+            "name": "Нана Мидзуки",
+            "enName": "Nana Mizuki",
+            "description": "Kumi Minakata",
+            "profession": "актеры",
+            "enProfession": "actor"
+        },
+        {
+            "id": 4213045,
+            "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_4213045.jpg",
+            "name": "Рэи Мотидзуки",
+            "enName": "Rei Mochizuki",
+            "description": null,
+            "profession": "актеры",
+            "enProfession": "actor"
+        },
+        {
+            "id": 4229339,
+            "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_4229339.jpg",
+            "name": "Каэдэ Юаса",
+            "enName": "Kaede Yuasa",
+            "description": "Magma",
+            "profession": "актеры",
+            "enProfession": "actor"
+        },
+        {
+            "id": 6008947,
+            "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_6008947.jpg",
+            "name": "Тэцуя Кобаяси",
+            "enName": "Tetsuya Kobayashi",
+            "description": null,
+            "profession": "композиторы",
+            "enProfession": "composer"
+        },
+        {
+            "id": 1878432,
+            "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1878432.jpg",
+            "name": "Синпэй Эдзаки",
+            "enName": "Shinpei Ezaki",
+            "description": null,
+            "profession": "режиссеры",
+            "enProfession": "director"
+        },
+        {
+            "id": 3022147,
+            "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_3022147.jpg",
+            "name": "Наотака Хаяси",
+            "enName": "Naotaka Hayashi",
+            "description": null,
+            "profession": "режиссеры",
+            "enProfession": "director"
+        },
+        {
+            "id": 2037480,
+            "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_2037480.jpg",
+            "name": "Хироюки Окуно",
+            "enName": "Hiroyuki Okuno",
+            "description": null,
+            "profession": "режиссеры",
+            "enProfession": "director"
+        },
+        {
+            "id": 1965914,
+            "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1965914.jpg",
+            "name": "Такахару Одзаки",
+            "enName": "Takaharu Ozaki",
+            "description": null,
+            "profession": "режиссеры",
+            "enProfession": "director"
+        },
+        {
+            "id": 3932326,
+            "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_3932326.jpg",
+            "name": "Норимицу Каихо",
+            "enName": "Norimitsu Kaiho",
+            "description": null,
+            "profession": "редакторы",
+            "enProfession": "writer"
+        },
+        {
+            "id": 1780385,
+            "photo": "https://st.kp.yandex.net/images/actor_iphone/iphone360_1780385.jpg",
+            "name": "Гэн Уробути",
+            "enName": "Gen Urobuchi",
+            "description": null,
+            "profession": "редакторы",
+            "enProfession": "writer"
+        }
+    ],
+    "images": {
+        "framesCount": 6
+    },
+    "lists": [],
+    "spokenLanguages": [],
+    "productionCompanies": [],
+    "typeNumber": 4,
+    "alternativeName": "Gunslinger Stratos: The Animation",
     "budget": {},
+    "enName": null,
+    "names": [
+        {
+            "name": "Небесные стрелки"
+        },
+        {
+            "name": "Gunslinger Stratos: The Animation"
+        }
+    ],
     "fees": {
         "world": {},
         "russia": {},
         "usa": {}
     },
-    "premiere": {
-        "world": "2000-12-11T00:00:00.000Z"
+    "updatedAt": "2024-03-21T01:00:20.320Z",
+    "movieLength": null,
+    "ratingMpaa": null,
+    "shortDescription": null,
+    "technology": {
+        "hasImax": false,
+        "has3D": false
     },
     "ticketsOnSale": false,
+    "similarMovies": [],
     "sequelsAndPrequels": [],
+    "ageRating": null,
+    "backdrop": {
+        "url": null,
+        "previewUrl": null
+    },
+    "logo": {
+        "url": null
+    },
     "watchability": {
         "items": []
     },
-    "top10": null,
-    "top250": null,
-    "isSeries": false,
-    "audience": [],
-    "deletedAt": null,
-    "facts": [],
-    "persons": [
+    "releaseYears": [
         {
-            "id": 552245,
-            "photo": "https://image.openmoviedb.com/kinopoisk-st-images//actor_iphone/iphone360_552245.jpg",
-            "name": "Кристина Агилера",
-            "enName": "Christina Aguilera",
-            "description": null,
-            "profession": "актеры",
-            "enProfession": "actor"
-        },
-        {
-            "id": 1935,
-            "photo": "https://image.openmoviedb.com/kinopoisk-st-images//actor_iphone/iphone360_1935.jpg",
-            "name": "Гектор Элизондо",
-            "enName": "Hector Elizondo",
-            "description": null,
-            "profession": "актеры",
-            "enProfession": "actor"
-        },
-        {
-            "id": 18470,
-            "photo": "https://image.openmoviedb.com/kinopoisk-st-images//actor_iphone/iphone360_18470.jpg",
-            "name": "Роб Эстес",
-            "enName": "Rob Estes",
-            "description": null,
-            "profession": "актеры",
-            "enProfession": "actor"
-        },
-        {
-            "id": 16743,
-            "photo": "https://image.openmoviedb.com/kinopoisk-st-images//actor_iphone/iphone360_16743.jpg",
-            "name": "Томас Гибсон",
-            "enName": "Thomas Gibson",
-            "description": null,
-            "profession": "актеры",
-            "enProfession": "actor"
-        },
-        {
-            "id": 568844,
-            "photo": "https://image.openmoviedb.com/kinopoisk-st-images//actor_iphone/iphone360_568844.jpg",
-            "name": "Мишель Кван",
-            "enName": "Michelle Kwan",
-            "description": null,
-            "profession": "актеры",
-            "enProfession": "actor"
-        },
-        {
-            "id": 1195193,
-            "photo": "https://image.openmoviedb.com/kinopoisk-st-images//actor_iphone/iphone360_1195193.jpg",
-            "name": "Крис Донован",
-            "enName": "Chris Donovan",
-            "description": null,
-            "profession": "режиссеры",
-            "enProfession": "director"
-        },
-        {
-            "id": 315295,
-            "photo": "https://image.openmoviedb.com/kinopoisk-st-images//actor_iphone/iphone360_315295.jpg",
-            "name": "Дуайт Хемион",
-            "enName": "Dwight Hemion",
-            "description": null,
-            "profession": "режиссеры",
-            "enProfession": "director"
-        },
-        {
-            "id": 2080971,
-            "photo": "https://image.openmoviedb.com/kinopoisk-st-images//actor_iphone/iphone360_2080971.jpg",
-            "name": "Барни Робинсон",
-            "enName": "Barney Robinson",
-            "description": null,
-            "profession": "монтажеры",
-            "enProfession": "editor"
-        },
-        {
-            "id": 27729,
-            "photo": "https://image.openmoviedb.com/kinopoisk-st-images//actor_iphone/iphone360_27729.jpg",
-            "name": "Дик Кларк",
-            "enName": "Dick Clark",
-            "description": null,
-            "profession": "продюсеры",
-            "enProfession": "producer"
-        },
-        {
-            "id": 1045011,
-            "photo": "https://image.openmoviedb.com/kinopoisk-st-images//actor_iphone/iphone360_1045011.jpg",
-            "name": "Патрик Дэвидсон",
-            "enName": "Patrick Davidson",
-            "description": null,
-            "profession": "продюсеры",
-            "enProfession": "producer"
-        },
-        {
-            "id": 676999,
-            "photo": "https://image.openmoviedb.com/kinopoisk-st-images//actor_iphone/iphone360_676999.jpg",
-            "name": "Стив Фельд",
-            "enName": "Steven Feld",
-            "description": null,
-            "profession": "продюсеры",
-            "enProfession": "producer"
-        },
-        {
-            "id": 1365182,
-            "photo": "https://image.openmoviedb.com/kinopoisk-st-images//actor_iphone/iphone360_1365182.jpg",
-            "name": "Крэйг Голин",
-            "enName": "Craig Golin",
-            "description": null,
-            "profession": "продюсеры",
-            "enProfession": "producer"
+            "start": 2015,
+            "end": 2015
         }
     ],
-    "spokenLanguages": [],
-    "seasonsInfo": [],
-    "collections": [],
-    "productionCompanies": [],
-    "similarMovies": [],
-    "releaseYears": [],
-    "createdAt": "2023-07-13T09:24:25.463Z",
-    "updatedAt": "2024-04-14T20:42:09.858Z",
+    "top10": null,
+    "top250": null,
+    "status": "completed",
+    "deletedAt": null,
+    "isSeries": true,
+    "seriesLength": 25,
+    "totalSeriesLength": 300,
     "networks": null
 }
