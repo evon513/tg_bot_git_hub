@@ -20,7 +20,7 @@ def isfloat(value):
 
 
 headers = {"X-API-KEY": "13KFM42-2QQ40P8-HP85Q09-8EV5DWQ"}
-request = f'https://api.kinopoisk.dev/v1.4/movie'
+request = f"https://api.kinopoisk.dev/v1.4/movie"
 json_response = ''
 # response = requests.get(request, headers=headers)
 # json_response = response.json()
@@ -196,9 +196,9 @@ async def button(update, context, msg='') -> None:
             age = json_response['docs'][x]['ageRating'] if json_response['docs'][x]['ageRating'] != None else 0
 
             if json_response['docs'][x]['movieLength'] != None:
-                length = f'фильма: {json_response['docs'][x]['movieLength']}'
+                length = f"фильма: {json_response['docs'][x]['movieLength']}"
             elif json_response['docs'][x]['seriesLength'] != None:
-                length = f'серии: {json_response['docs'][x]['seriesLength']}'
+                length = f"серии: {json_response['docs'][x]['seriesLength']}"
             else:
                 length = 0
 
@@ -208,10 +208,10 @@ async def button(update, context, msg='') -> None:
             elif json_response['docs'][x]['shortDescription'] != None:
                 description = json_response['docs'][x]['shortDescription']
             elif json_response['docs'][x]['description'] != None:
-                description = f'Слишком длинное описание'
+                description = f"Слишком длинное описание"
             else:
-                description = f'Без описания'
-            request_web = f'https://www.kinopoisk.ru/film/{json_response['docs'][x]['id']}/'
+                description = f"Без описания"
+            request_web = f"https://www.kinopoisk.ru/film/{json_response['docs'][x]['id']}/"
             await context.bot.send_photo(chat_id=update.effective_chat.id, photo=photo, caption=f"<a href=\"{request_web}\">«{name}»</a> ({year} год, {age}+)"
                                                                                                 f"\nДлительность {length} мин."
                                                                                                 f"\nРейтинг фильма: {rating}\n"
@@ -263,23 +263,23 @@ async def answers(update, context):
     global search_filters
     if genre_dialogue:
         if update.message.text.isdigit() and (33 > int(update.message.text) > 0):
-            await update.message.reply_html(f'Вы выбрали жанр номер {update.message.text}: <b>{json_response_genres[int(update.message.text) - 1]['name']}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.', reply_markup=markup_search)
+            await update.message.reply_html(f"Вы выбрали жанр номер {update.message.text}: <b>{json_response_genres[int(update.message.text) - 1]['name']}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.", reply_markup=markup_search)
             search_filters['genre'] = json_response_genres[int(update.message.text) - 1]['name']
         else:
             await update.message.reply_text(f'Введите существующий номер!')
     elif length_dialogue:
         if update.message.text.isdigit():
-            await update.message.reply_html(f'Вы ввели длительность: <b>{update.message.text} мин</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.', reply_markup=markup_search)
+            await update.message.reply_html(f"Вы ввели длительность: <b>{update.message.text} мин</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.", reply_markup=markup_search)
             search_filters['film_length'] = update.message.text
         elif update.message.text.split('-')[0].isdigit() and update.message.text.split('-')[1].isdigit():
-            await update.message.reply_html(f'Вы ввели диапазон длительности длительности: <b>{update.message.text} мин</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.', reply_markup=markup_search)
+            await update.message.reply_html(f"Вы ввели диапазон длительности длительности: <b>{update.message.text} мин</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.", reply_markup=markup_search)
             search_filters['film_length'] = update.message.text
         else:
             await update.message.reply_text(f'Введите число или диапазон чисел!')
     elif country_dialogue:
         for x in json_response_countries:
             if update.message.text.lower() == x['name'].lower():
-                await update.message.reply_html(f'Вы выбрали страну: <b>{x['name']}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.', reply_markup=markup_search)
+                await update.message.reply_html(f"Вы выбрали страну: <b>{x['name']}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.", reply_markup=markup_search)
                 search_filters['country'] = x['name']
                 return
         await update.message.reply_text(f'Похоже такой страны в нашем списке нет!')
@@ -290,7 +290,7 @@ async def answers(update, context):
             elif int(update.message.text) < 1874:
                 await update.message.reply_text(f'Фильмы начинаются с 1874 года!')
             else:
-                await update.message.reply_html(f'Вы выбрали <b>{update.message.text} год</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.', reply_markup=markup_search)
+                await update.message.reply_html(f"Вы выбрали <b>{update.message.text} год</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.", reply_markup=markup_search)
                 search_filters['year'] = update.message.text
         elif update.message.text.split('-')[0].isdigit() and update.message.text.split('-')[1].isdigit():
             if (2025 > int(update.message.text.split('-')[0]) > 1874) and (2025 > int(update.message.text.split('-')[1]) > 1874):
@@ -303,7 +303,7 @@ async def answers(update, context):
     elif type_dialogue:
         if update.message.text.isdigit():
             if 6 > int(update.message.text) > 0:
-                await update.message.reply_html(f'Вы выбрали тип номер {update.message.text}: <b>{json_response_types[int(update.message.text) - 1]['name']}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.', reply_markup=markup_search)
+                await update.message.reply_html(f"Вы выбрали тип номер {update.message.text}: <b>{json_response_types[int(update.message.text) - 1]['name']}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.", reply_markup=markup_search)
                 search_filters['type'] = json_response_types[int(update.message.text) - 1]['name']
             else:
                 await update.message.reply_text(f'Введите цифру из списка!')
@@ -312,7 +312,7 @@ async def answers(update, context):
     elif rating_dialogue:
         if isfloat(update.message.text):
             if 0.0 <= float(update.message.text) <= 10.0:
-                await update.message.reply_html(f'Вы ввели рейтинг: <b>{update.message.text}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.', reply_markup=markup_search)
+                await update.message.reply_html(f"Вы ввели рейтинг: <b>{update.message.text}</b>. Теперь вы можете выбрать другой фильтр или нажать на поле <b>Вернуться ⭢ Найти</b>.", reply_markup=markup_search)
                 search_filters['rate'] = update.message.text
             else:
                 await update.message.reply_text(f'Вы можете вводить рейтинг от 2 до 10!')
