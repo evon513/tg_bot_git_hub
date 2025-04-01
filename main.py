@@ -190,7 +190,10 @@ async def button(update, context, msg='') -> None:
             response_get = True
         if len(json_response['docs']) != 0:
             x = randint(0, len(json_response['docs']) - 1)
-            photo = json_response['docs'][x]['poster']['url'] if json_response['docs'][x]['poster']['url'] != None else open('kinopoisk.jpg', 'rb')
+            try:
+                photo = json_response['docs'][x]['poster']['url'] if json_response['docs'][x]['poster']['url'] != None else open('kinopoisk.jpg', 'rb')
+            except Exception:
+                photo = open('kinopoisk.jpg', 'rb')
             name = json_response['docs'][x]['name'] if json_response['docs'][x]['name'] != None else json_response['docs'][x]['alternativeName']
             year = json_response['docs'][x]['year']
             age = json_response['docs'][x]['ageRating'] if json_response['docs'][x]['ageRating'] != None else 0
